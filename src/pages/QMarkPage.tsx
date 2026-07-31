@@ -1,4 +1,10 @@
 import {
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
+
+import {
   formatClockTime,
   formatTimerSeconds,
   getDisplaySeconds,
@@ -41,28 +47,94 @@ export default function QMarkPage() {
         )
       : 0
 
-  const sortedCueMarks = [
-    ...project.cueMarks,
-  ].sort((first, second) => {
-    const segmentOrderDifference =
-      first.segmentOrder - second.segmentOrder
+  const sortedCueMarks = useMemo(
+    () =>
+      [...project.cueMarks].sort(
+        (first, second) => {
+          const segmentOrderDifference =
+            first.segmentOrder -
+            second.segmentOrder
 
-    if (segmentOrderDifference !== 0) {
-      return segmentOrderDifference
+          if (
+            segmentOrderDifference !== 0
+          ) {
+            return segmentOrderDifference
+          }
+
+          const elapsedDifference =
+            first.elapsedSeconds -
+            second.elapsedSeconds
+
+          if (elapsedDifference !== 0) {
+            return elapsedDifference
+          }
+
+          return (
+            new Date(
+              first.createdAt,
+            ).getTime() -
+            new Date(
+              second.createdAt,
+            ).getTime()
+          )
+        },
+      ),
+    [project.cueMarks],
+  )
+
+  const newestCueMarkId = useMemo(
+    () =>
+      project.cueMarks.reduce(
+        (newestId, cueMark) => {
+          if (!newestId) {
+            return cueMark.id
+          }
+
+          const newestCueMark =
+            project.cueMarks.find(
+              (candidate) =>
+                candidate.id === newestId,
+            )
+
+          if (!newestCueMark) {
+            return cueMark.id
+          }
+
+          return new Date(
+            cueMark.createdAt,
+          ).getTime() >
+            new Date(
+              newestCueMark.createdAt,
+            ).getTime()
+            ? cueMark.id
+            : newestId
+        },
+        '',
+      ),
+    [project.cueMarks],
+  )
+
+  const newestCueMarkRef =
+    useRef<HTMLElement | null>(null)
+
+  const previousCueMarkCountRef = useRef(
+    project.cueMarks.length,
+  )
+
+  useEffect(() => {
+    if (
+      project.cueMarks.length >
+      previousCueMarkCountRef.current
+    ) {
+      newestCueMarkRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      })
     }
 
-    const elapsedDifference =
-      first.elapsedSeconds - second.elapsedSeconds
-
-    if (elapsedDifference !== 0) {
-      return elapsedDifference
-    }
-
-    return (
-      new Date(first.createdAt).getTime() -
-      new Date(second.createdAt).getTime()
-    )
-  })
+    previousCueMarkCountRef.current =
+      project.cueMarks.length
+  }, [project.cueMarks.length, newestCueMarkId])
 
   return (
     <section className="page">
@@ -121,6 +193,11 @@ export default function QMarkPage() {
               <article
                 className="qmark-row"
                 key={cueMark.id}
+                ref={
+                  cueMark.id === newestCueMarkId
+                    ? newestCueMarkRef
+                    : undefined
+                }
               >
                 <div className="qmark-main">
                   <div>

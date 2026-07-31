@@ -51,11 +51,16 @@
 }
 
 .timer-display {
-  padding: 36px 20px;
-  font-size: clamp(2.5rem, 6vw, 5rem);
+  width: 100%;
+  padding: 36px 8px;
+  overflow: hidden;
+  font-size: min(10vw, 6.8rem);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
   text-align: center;
   border-bottom: 1px solid #333;
+  white-space: nowrap;
 }
 
 .countdown-display {
@@ -152,6 +157,11 @@
 
   .mobile-page .page {
     height: 100%;
+  }
+
+  .timer-display {
+    padding: 34px 4px;
+    font-size: min(21vw, 6.6rem);
   }
 }
 
