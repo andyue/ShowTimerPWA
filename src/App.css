@@ -317,6 +317,19 @@
   color: inherit;
 }
 
+.qmark-page-content {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.qmark-scroll-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 @media (max-width: 520px) {
   .qmark-row {
     grid-template-columns: 1fr;
@@ -336,6 +349,7 @@
 
 .qmark-timer-panel {
   display: grid;
+  flex: 0 0 auto;
   gap: 6px;
   margin-bottom: 18px;
   padding: 18px;

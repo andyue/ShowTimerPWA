@@ -142,7 +142,7 @@ export default function QMarkPage() {
         <h1>Q Marks</h1>
       </header>
 
-      <div className="page-content">
+      <div className="page-content qmark-page-content">
         {currentSegment ? (
           <section
             className={
@@ -185,81 +185,86 @@ export default function QMarkPage() {
           </section>
         )}
 
-        {sortedCueMarks.length === 0 ? (
-          <p>目前還沒有 Q Mark。</p>
-        ) : (
-          <div className="qmark-list">
-            {sortedCueMarks.map((cueMark) => (
-              <article
-                className="qmark-row"
-                key={cueMark.id}
-                ref={
-                  cueMark.id === newestCueMarkId
-                    ? newestCueMarkRef
-                    : undefined
-                }
-              >
-                <div className="qmark-main">
-                  <div>
-                    <strong>{cueMark.label}</strong>
+        <div className="qmark-scroll-area">
+          {sortedCueMarks.length === 0 ? (
+            <p>目前還沒有 Q Mark。</p>
+          ) : (
+            <div className="qmark-list">
+              {sortedCueMarks.map((cueMark) => (
+                <article
+                  className="qmark-row"
+                  key={cueMark.id}
+                  ref={
+                    cueMark.id === newestCueMarkId
+                      ? newestCueMarkRef
+                      : undefined
+                  }
+                >
+                  <div className="qmark-main">
+                    <div>
+                      <strong>
+                        {cueMark.label}
+                      </strong>
 
-                    <span className="segment-meta inline-meta">
-                      {cueMark.segmentName} ·{' '}
-                      {cueMark.segmentType === 'act'
-                        ? 'Act'
-                        : 'Intermission'}
-                    </span>
+                      <span className="segment-meta inline-meta">
+                        {cueMark.segmentName} ·{' '}
+                        {cueMark.segmentType ===
+                        'act'
+                          ? 'Act'
+                          : 'Intermission'}
+                      </span>
+                    </div>
+
+                    <label
+                      className="qmark-note-field"
+                      aria-label={`${cueMark.label} note`}
+                    >
+                      <textarea
+                        value={cueMark.note}
+                        placeholder="Add note"
+                        rows={2}
+                        onChange={(event) =>
+                          updateCueMarkNote(
+                            cueMark.id,
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </label>
                   </div>
 
-                  <label
-                    className="qmark-note-field"
-                    aria-label={`${cueMark.label} note`}
-                  >
-                    <textarea
-                      value={cueMark.note}
-                      placeholder="Add note"
-                      rows={2}
-                      onChange={(event) =>
-                        updateCueMarkNote(
-                          cueMark.id,
-                          event.target.value,
-                        )
+                  <div className="qmark-side">
+                    <div className="qmark-time">
+                      <span>
+                        {formatTimerSeconds(
+                          cueMark.elapsedSeconds,
+                        )}
+                      </span>
+
+                      <small>
+                        {formatClockTime(
+                          new Date(
+                            cueMark.createdAt,
+                          ).getTime(),
+                        )}
+                      </small>
+                    </div>
+
+                    <button
+                      className="danger-button qmark-delete-button"
+                      type="button"
+                      onClick={() =>
+                        deleteCueMark(cueMark.id)
                       }
-                    />
-                  </label>
-                </div>
-
-                <div className="qmark-side">
-                  <div className="qmark-time">
-                    <span>
-                      {formatTimerSeconds(
-                        cueMark.elapsedSeconds,
-                      )}
-                    </span>
-
-                    <small>
-                      {formatClockTime(
-                        new Date(
-                          cueMark.createdAt,
-                        ).getTime(),
-                      )}
-                    </small>
+                    >
+                      Delete
+                    </button>
                   </div>
-
-                  <button
-                    className="danger-button qmark-delete-button"
-                    type="button"
-                    onClick={() =>
-                      deleteCueMark(cueMark.id)
-                    }
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <button
