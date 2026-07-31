@@ -46,6 +46,7 @@
 .page-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 20px;
 }
 
@@ -184,6 +185,8 @@
 }
 
 .field input {
+  width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: 10px 12px;
   border: 1px solid #444;
@@ -459,6 +462,7 @@ button:disabled {
   align-items: flex-end;
   gap: 8px;
   margin: 0;
+  min-width: 0;
   padding: 12px;
   border: 1px solid #3f3f3f;
   border-radius: 10px;
@@ -484,6 +488,7 @@ button:disabled {
 
 .duration-editor input {
   width: 64px;
+  max-width: 100%;
   min-height: 42px;
   padding: 8px;
   border: 1px solid #444;
@@ -524,6 +529,55 @@ button:disabled {
   display: grid;
   gap: 6px;
   margin-bottom: 16px;
+}
+
+.tools-column .page-content {
+  padding: 14px;
+}
+
+.tools-column .tool-section {
+  padding: 14px;
+}
+
+.tools-column .section-heading {
+  align-items: start;
+}
+
+.tools-column .segment-editor {
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+}
+
+.tools-column .segment-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.tools-column .segment-actions button {
+  min-width: 0;
+  padding: 8px;
+}
+
+.tools-column .duration-editor {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto minmax(0, 1fr)
+    auto minmax(0, 1fr);
+  align-items: end;
+  gap: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.tools-column .duration-editor input {
+  width: 100%;
+}
+
+.tools-column .duration-separator {
+  padding-bottom: 10px;
 }
 
 .running-summary {
