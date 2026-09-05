@@ -157,7 +157,7 @@
 
 .timer-column .primary-button,
 .mobile-page .timer-action-bar .primary-button {
-  background: #f2732b;
+  background: #137423;
 }
 
 .qmark-column .page > .primary-button,
@@ -382,6 +382,8 @@
   border: 1px solid #734040;
   border-radius: 8px;
   color: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .qmark-main {
@@ -415,7 +417,129 @@
   display: flex;
   min-height: 0;
   flex-direction: column;
+  padding: 24px 26px 20px;
   overflow: hidden;
+}
+
+.qmark-page .page-header {
+  justify-content: center;
+  padding: 24px 20px 12px;
+  border-bottom: none;
+  text-align: center;
+}
+
+.qmark-page .page-header h1 {
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 1;
+}
+
+.qmark-table-frame {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #9a9a9a;
+  border-radius: 16px;
+  background: #000;
+  overflow: auto;
+}
+
+.qmark-mobile-timer-panel {
+  display: none;
+}
+
+.qmark-table {
+  width: 100%;
+  min-width: 0;
+  border-collapse: collapse;
+  color: #fff;
+  table-layout: auto;
+}
+
+.qmark-table th,
+.qmark-table td {
+  border: 1px solid #9a9a9a;
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+
+.qmark-table th {
+  height: 48px;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.qmark-table td {
+  height: 40px;
+  font-size: clamp(1.15rem, 1.7vw, 1.55rem);
+  line-height: 1;
+}
+
+.qmark-table th:nth-child(1),
+.qmark-table td:nth-child(1) {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.qmark-table th:nth-child(2),
+.qmark-table td:nth-child(2) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.qmark-table th:nth-child(3),
+.qmark-table td:nth-child(3) {
+  width: 21%;
+  text-align: center;
+}
+
+.qmark-table th:nth-child(4),
+.qmark-table td:nth-child(4) {
+  width: auto;
+}
+
+.qmark-table th:nth-child(5),
+.qmark-table td:nth-child(5) {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.qmark-table-time {
+  color: #00ff22;
+  font-size: clamp(1.25rem, 1.9vw, 1.7rem);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qmark-table-note {
+  display: block;
+}
+
+.qmark-table-note textarea {
+  width: 100%;
+  min-height: 28px;
+  resize: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.qmark-table-note textarea::placeholder {
+  color: #fff;
+  opacity: 1;
+}
+
+.qmark-empty-cell {
+  padding: 28px 18px !important;
+  color: #999;
+  font-size: 1.1rem !important;
+  text-align: center;
 }
 
 .qmark-scroll-area {
@@ -425,6 +549,99 @@
 }
 
 @media (max-width: 520px) {
+  .qmark-page .page-header {
+    padding: 22px 12px 12px;
+  }
+
+  .qmark-page .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .qmark-page-content {
+    padding: 12px 8px;
+  }
+
+  .qmark-mobile-timer-panel {
+    display: grid;
+    flex: 0 0 auto;
+    gap: 4px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid #3d3d3d;
+    border-radius: 10px;
+    background: #161616;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .qmark-mobile-timer-panel strong {
+    font-size: 1.05rem;
+  }
+
+  .qmark-mobile-timer-panel .qmark-live-time {
+    font-size: clamp(2.6rem, 15vw, 4.2rem);
+  }
+
+  .qmark-table-frame {
+    border-radius: 10px;
+    overflow-x: hidden;
+  }
+
+  .qmark-table th,
+  .qmark-table td {
+    padding: 3px 4px;
+  }
+
+  .qmark-table th {
+    height: 42px;
+    font-size: 1rem;
+  }
+
+  .qmark-table td {
+    height: 36px;
+    font-size: 1.05rem;
+  }
+
+  .qmark-table th:nth-child(1),
+  .qmark-table td:nth-child(1) {
+    width: 1%;
+  }
+
+  .qmark-table th:nth-child(2),
+  .qmark-table td:nth-child(2) {
+    width: 1%;
+  }
+
+  .qmark-table th:nth-child(3),
+  .qmark-table td:nth-child(3) {
+    width: 18%;
+  }
+
+  .qmark-table th:nth-child(4),
+  .qmark-table td:nth-child(4) {
+    width: auto;
+  }
+
+  .qmark-table th:nth-child(5),
+  .qmark-table td:nth-child(5) {
+    width: 1%;
+  }
+
+  .qmark-table-time {
+    font-size: 1.12rem !important;
+  }
+
+  .qmark-table-note textarea {
+    min-height: 28px;
+  }
+
+  .qmark-delete-button {
+    min-height: 28px;
+    padding: 3px 4px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+  }
+
   .qmark-row {
     grid-template-columns: 1fr;
   }
@@ -478,6 +695,13 @@
 
 .muted-time {
   color: #777;
+}
+
+.qmark-column .page > .qmark-mark-button,
+.mobile-page > .page > .qmark-mark-button {
+  background: #e60086;
+  color: #fff;
+  font-weight: 600;
 }
 
 .segment-meta,
