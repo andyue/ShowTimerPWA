@@ -490,8 +490,27 @@
 
 .qmark-table th:nth-child(3),
 .qmark-table td:nth-child(3) {
-  width: 21%;
+  width: 3.1rem;
+  max-width: 3.1rem;
+  padding-right: 1px;
+  padding-left: 1px;
   text-align: center;
+  white-space: nowrap;
+}
+
+.qmark-table-act {
+  position: relative;
+  overflow: hidden;
+}
+
+.qmark-table-act-text {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .qmark-table th:nth-child(4),
@@ -502,6 +521,8 @@
 .qmark-table th:nth-child(5),
 .qmark-table td:nth-child(5) {
   width: 1%;
+  padding-right: 2px;
+  padding-left: 2px;
   text-align: center;
   white-space: nowrap;
 }
@@ -614,7 +635,14 @@
 
   .qmark-table th:nth-child(3),
   .qmark-table td:nth-child(3) {
-    width: 18%;
+    width: 2.35rem;
+    max-width: 2.35rem;
+    padding-right: 1px;
+    padding-left: 1px;
+  }
+
+  .qmark-table-act-text {
+    font-size: 0.76em;
   }
 
   .qmark-table th:nth-child(4),

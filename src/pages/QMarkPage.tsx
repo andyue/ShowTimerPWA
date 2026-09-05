@@ -222,8 +222,10 @@ export default function QMarkPage() {
                         )}
                       </td>
 
-                      <td>
-                        {cueMark.segmentName}
+                      <td className="qmark-table-act">
+                        <span className="qmark-table-act-text">
+                          {cueMark.segmentName}
+                        </span>
                       </td>
 
                       <td>
