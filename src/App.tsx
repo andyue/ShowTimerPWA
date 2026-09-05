@@ -9,13 +9,44 @@ type PageName = 'tools' | 'timer' | 'qmarks'
 function App() {
   const [selectedPage, setSelectedPage] =
     useState<PageName>('timer')
+  const [isToolsHidden, setIsToolsHidden] =
+    useState(false)
 
   return (
     <main className="app">
-      <div className="desktop-layout">
+      <div
+        className={
+          isToolsHidden
+            ? 'desktop-layout tools-hidden'
+            : 'desktop-layout'
+        }
+      >
         <aside className="tools-column">
           <ToolsPage />
         </aside>
+
+        <button
+          className="tools-toggle"
+          type="button"
+          aria-label={
+            isToolsHidden
+              ? 'Show tools panel'
+              : 'Hide tools panel'
+          }
+          aria-expanded={!isToolsHidden}
+          title={
+            isToolsHidden
+              ? 'Show Tools'
+              : 'Hide Tools'
+          }
+          onClick={() =>
+            setIsToolsHidden(
+              (currentValue) => !currentValue,
+            )
+          }
+        >
+          {isToolsHidden ? 'Tools' : 'Hide'}
+        </button>
 
         <section className="timer-column">
           <TimerPage />

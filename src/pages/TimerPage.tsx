@@ -292,7 +292,7 @@ export default function TimerPage() {
             onClick={startShow}
           >
             {currentSegment
-              ? `Start: ${currentSegment.name}`
+              ? `Start ${currentSegment.name}`
               : 'Start'}
           </button>
         )}
