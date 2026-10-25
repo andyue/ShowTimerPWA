@@ -1,3 +1,4 @@
+import ConnectionsPanel from '../components/ConnectionsPanel'
 import {
   useRef,
   useState,
@@ -9,6 +10,7 @@ import { useShowTimerStore } from '../stores/useShowTimerStore'
 export default function ToolsPage() {
   const {
     project,
+    timerRun,
     setProjectName,
     addAct,
     addIntermission,
@@ -23,6 +25,8 @@ export default function ToolsPage() {
     resetShow,
     resetProject,
   } = useShowTimerStore()
+
+  const isActive = timerRun.status === 'running' || timerRun.status === 'paused'
 
   const jsonFileInputRef =
     useRef<HTMLInputElement>(null)
@@ -162,6 +166,7 @@ export default function ToolsPage() {
           <div className="button-row">
             <button
               type="button"
+              disabled={isActive}
               onClick={addAct}
             >
               Add Act
@@ -169,6 +174,7 @@ export default function ToolsPage() {
 
             <button
               type="button"
+              disabled={isActive}
               onClick={addIntermission}
             >
               Add Intermission
@@ -238,7 +244,7 @@ export default function ToolsPage() {
                         type="button"
                         aria-label="Move segment up"
                         title="Move Up"
-                        disabled={index === 0}
+                        disabled={isActive || index === 0}
                         onClick={() =>
                           moveSegment(
                             segment.id,
@@ -254,7 +260,7 @@ export default function ToolsPage() {
                         aria-label="Move segment down"
                         title="Move Down"
                         disabled={
-                          index ===
+                          isActive || index ===
                           project.segments.length - 1
                         }
                         onClick={() =>
@@ -270,6 +276,7 @@ export default function ToolsPage() {
                       <button
                         className="danger-button"
                         type="button"
+                        disabled={isActive}
                         onClick={() =>
                           deleteSegment(segment.id)
                         }
@@ -381,6 +388,7 @@ export default function ToolsPage() {
             Reset Show File
           </button>
         </section>
+        <ConnectionsPanel />
       </div>
     </section>
   )

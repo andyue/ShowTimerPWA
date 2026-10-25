@@ -1,8 +1,10 @@
+import PauseHistory from '../components/PauseHistory'
 import {
   formatClockTime,
   formatTimerSeconds,
   getDisplaySeconds,
-  getElapsedSeconds,
+  getRunElapsedSeconds,
+  getPausedMs,
   getRemainingOrDelaySeconds,
 } from '../services/TimerEngine'
 import { useShowTimerStore } from '../stores/useShowTimerStore'
@@ -14,6 +16,9 @@ export default function TimerPage() {
     startShow,
     nextSegment,
     resetRun,
+    pauseShow,
+    resumeShow,
+    updatePauseNote,
   } = useShowTimerStore()
 
   const currentSegment =
@@ -24,15 +29,15 @@ export default function TimerPage() {
       : project.segments[0]
 
   const elapsedSeconds =
-    timerRun.status === 'running'
-      ? getElapsedSeconds(
-          timerRun.startedAtMs,
+    (timerRun.status === 'running' || timerRun.status === 'paused')
+      ? getRunElapsedSeconds(
+          timerRun,
           timerRun.nowMs,
         )
       : 0
 
   const displaySeconds =
-    timerRun.status === 'running'
+    (timerRun.status === 'running' || timerRun.status === 'paused')
       ? getDisplaySeconds(
           currentSegment,
           elapsedSeconds,
@@ -40,20 +45,20 @@ export default function TimerPage() {
       : 0
 
   const isLastSegment =
-    timerRun.status === 'running' &&
+    (timerRun.status === 'running' || timerRun.status === 'paused') &&
     timerRun.currentSegmentIndex ===
       project.segments.length - 1
 
   const plannedEndMs =
     currentSegment &&
-    timerRun.status === 'running'
+    (timerRun.status === 'running' || timerRun.status === 'paused')
       ? timerRun.startedAtMs +
-        currentSegment.plannedSeconds * 1000
+        currentSegment.plannedSeconds * 1000 + getPausedMs(timerRun)
       : 0
 
   const nextSegmentName =
     !isLastSegment &&
-    timerRun.status === 'running'
+    (timerRun.status === 'running' || timerRun.status === 'paused')
       ? project.segments[
           timerRun.currentSegmentIndex + 1
         ]?.name
@@ -79,7 +84,7 @@ export default function TimerPage() {
         className={
           currentSegment?.type ===
             'intermission' &&
-          timerRun.status === 'running'
+          (timerRun.status === 'running' || timerRun.status === 'paused')
             ? 'timer-display countdown-display'
             : 'timer-display'
         }
@@ -87,8 +92,12 @@ export default function TimerPage() {
         {formatTimerSeconds(displaySeconds)}
       </div>
 
+      {timerRun.status === 'paused' && <div className="pause-banner" role="status">
+        <strong>演出暫停中</strong>
+        <span>本次暫停 {formatTimerSeconds((timerRun.nowMs - timerRun.pauses.at(-1)!.startedAtMs) / 1000)}</span>
+      </div>}
       <div className="page-content">
-        {timerRun.status === 'running' &&
+        {(timerRun.status === 'running' || timerRun.status === 'paused') &&
           currentSegment && (
             <section
               className={
@@ -99,6 +108,8 @@ export default function TimerPage() {
               }
             >
               <h2>{currentSegment.name}</h2>
+              <p>累計暫停 {formatTimerSeconds(getPausedMs(timerRun) / 1000)} · 總耗時 {formatTimerSeconds((timerRun.nowMs - timerRun.startedAtMs) / 1000)}</p>
+              <PauseHistory pauses={timerRun.pauses} nowMs={timerRun.nowMs} onNote={updatePauseNote} />
 
               <div className="timer-stat-grid">
                 <div className="timer-stat">
@@ -142,7 +153,7 @@ export default function TimerPage() {
                 )}
 
                 <div className="timer-stat elapsed-stat">
-                  <span>Elapsed</span>
+                  <span>淨演出時間</span>
 
                   <strong>
                     {formatTimerSeconds(
@@ -213,11 +224,10 @@ export default function TimerPage() {
                     </span>
                   </div>
 
-                  {timerRun.status ===
-                    'running' &&
+                  {(timerRun.status === 'running' || timerRun.status === 'paused') &&
                   segment.id ===
                     currentSegment?.id ? (
-                    <span>Running</span>
+                    <span>{timerRun.status === 'paused' ? 'Paused' : 'Running'}</span>
                   ) : timerRun.status ===
                       'idle' &&
                     timerRun.currentSegmentIndex ===
@@ -256,11 +266,11 @@ export default function TimerPage() {
                   </span>
                 </div>
 
-                <span>
-                  {formatTimerSeconds(
-                    result.elapsedSeconds,
-                  )}
-                </span>
+                <div>
+                  <span>淨演出 {formatTimerSeconds(result.elapsedSeconds)}</span>
+                  <span className="segment-meta inline-meta">暫停 {formatTimerSeconds(result.pausedSeconds ?? 0)} · 總耗時 {formatTimerSeconds(result.totalSeconds ?? result.elapsedSeconds)}</span>
+                  <PauseHistory pauses={result.pauses ?? []} nowMs={timerRun.nowMs} onNote={updatePauseNote} />
+                </div>
               </div>
             ))}
           </div>
@@ -268,6 +278,12 @@ export default function TimerPage() {
       </div>
 
       <div className="timer-action-bar">
+        {timerRun.status === 'running' && <button className="secondary-button pause-button" onClick={pauseShow}>Pause 暫停</button>}
+        {timerRun.status === 'paused' && <>
+          <button className="primary-button" onClick={resumeShow}>Resume 繼續演出</button>
+          <button className="secondary-button" onClick={() => { if (window.confirm('結束暫停並結束本段？最後一次暫停會計入紀錄。')) nextSegment() }}>結束本段</button>
+        </>}
+        {timerRun.status === 'paused' ? null : <>
         {timerRun.status === 'running' ? (
           <button
             className="primary-button"
@@ -287,7 +303,7 @@ export default function TimerPage() {
             className="primary-button"
             type="button"
             disabled={
-              project.segments.length === 0
+              project.segments.length === 0 || timerRun.status === 'finished'
             }
             onClick={startShow}
           >
@@ -306,6 +322,7 @@ export default function TimerPage() {
             Reset Run
           </button>
         )}
+        </>}
       </div>
     </section>
   )

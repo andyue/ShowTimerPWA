@@ -10,7 +10,16 @@ export interface SegmentResult {
 
   plannedSeconds: number
   elapsedSeconds: number
+  pausedSeconds?: number
+  totalSeconds?: number
+  pauses?: PauseRecord[]
 
   startedAt: string
   endedAt: string
+}
+export interface PauseRecord {
+  id: string
+  startedAtMs: number
+  endedAtMs: number | null
+  note: string
 }

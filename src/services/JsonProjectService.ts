@@ -1,3 +1,5 @@
+import { parsePauseRecords } from './PauseValidation'
+import type { SegmentResult } from '../models/SegmentResult'
 import {
   SHOWTIMER_FORMAT_NAME,
   SHOWTIMER_FORMAT_VERSION,
@@ -147,7 +149,18 @@ export function validateShowProject(
 
     segments,
     results:
-      value.results as ShowProject['results'],
+      value.results.map((result): SegmentResult => {
+        if (!isRecord(result) || typeof result.id !== 'string' || typeof result.segmentId !== 'string' ||
+          typeof result.segmentName !== 'string' || !Number.isInteger(result.segmentOrder) ||
+          !['act', 'intermission'].includes(String(result.segmentType)) ||
+          !Number.isFinite(result.elapsedSeconds) || Number(result.elapsedSeconds) < 0 ||
+          !Number.isFinite(result.plannedSeconds) || Number(result.plannedSeconds) < 0 ||
+          typeof result.startedAt !== 'string' || typeof result.endedAt !== 'string') throw new Error('完成紀錄格式不正確')
+        for (const field of ['pausedSeconds', 'totalSeconds']) {
+          if (result[field] !== undefined && (!Number.isFinite(result[field]) || Number(result[field]) < 0)) throw new Error('完成紀錄時間不正確')
+        }
+        return { ...result, ...(result.pauses === undefined ? {} : { pauses: parsePauseRecords(JSON.stringify(result.pauses)) }) } as unknown as SegmentResult
+      }),
     cueMarks,
   }
 }

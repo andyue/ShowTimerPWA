@@ -1,75 +1,51 @@
-# React + TypeScript + Vite
+# ShowTimer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React / TypeScript 演出計時器，前端維持 GitHub Pages 部署。
 
-Currently, two official plugins are available:
+## 本機開發
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+需要 Node.js 24。
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 本次新增
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- 暫停／恢復：淨演出時間不包含暫停；本次與累計暫停另外計算。
+- 每次暫停保留起訖時間與可事後編輯的原因，完成紀錄同時顯示淨演出、暫停和總耗時。
+- 暫停中的「結束本段」會確認後結算最後一次暫停；正常 Next 與 OSC Next 在暫停時不執行。
+- Q Mark 使用淨演出時間，暫停時不能新增。
+- 執行中與暫停中的狀態可在同一瀏覽器重新整理後恢復。進行中不允許新增、刪除或重排段落。
+- JSON v2 與 CSV 保留暫停明細，也可讀取既有 v1 檔案。
+- 一台主控、多台唯讀觀看；QR Code、晚加入、重連、時間校正與離線提示。
+- QLab OSC 控制：start、pause、resume、next、mark。橋接程式需要在主控 Mac 上執行。
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+目前專案為瀏覽器網頁，尚未配置離線 Service Worker 或安裝用 manifest；加入主畫面不代表可保證離線啟動。
 
+## 使用與設定
+
+- [雲端廣播部署與使用](docs/broadcast.md)
+- [QLab OSC 設定](docs/osc.md)
+
+雲端廣播需先建立同步服務。未設定服務時，本機計時與暫停功能仍可用。
+
+## 驗證
+
+```sh
+npm run lint
+npm test
+npx playwright install chromium
+npm run test:e2e
+npm run build:pages
 ```
+
+單元／整合測試包含毫秒精度、多次暫停、CSV／JSON 相容、WebSocket 權限、主控重連與真實 UDP OSC。
+瀏覽器測試包含暫停恢復、重載保存、手機觀看端、廣播重連及模擬 QLab 指令。
+實際 QLab、iOS Safari 與場地網路仍需現場驗收。
+
+## 部署
+
+推送 `main` 後 GitHub Actions 先執行 lint、單元／整合測試與瀏覽器測試，再建置並發布 GitHub Pages。
+同步服務為獨立 Node.js 程式，不會由 Pages 自動代管；OSC 橋接也不會部署至 Pages。

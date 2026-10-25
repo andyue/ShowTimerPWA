@@ -1026,3 +1026,27 @@ button:disabled {
     width: 56px;
   }
 }
+
+.pause-banner { display: grid; gap: 8px; padding: 16px; text-align: center; background: #5c3900; color: #ffe0a3; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.pause-banner strong { font-size: 1.5rem; }
+.pause-button { border-color: #e0a744; color: #ffe0a3; }
+.pause-history { text-align: left; margin: 12px 0; }
+.pause-history summary { cursor: pointer; color: #e0ba79; }
+.pause-record { display: grid; gap: 8px; margin-top: 10px; padding: 10px; border: 1px solid #555; border-radius: 8px; }
+.timer-action-bar { flex-wrap: wrap; gap: 4px; }
+.timer-action-bar .secondary-button { margin: 8px 4px; }
+.connection-panel { display: grid; gap: 12px; }
+.connection-panel h2, .connection-panel p { margin: 0; }
+.broadcast-share { display: grid; justify-items: center; gap: 10px; overflow-wrap: anywhere; }
+.broadcast-share img { max-width: 100%; height: auto; }
+.broadcast-share a { color: #9cd7ff; }
+.broadcast-share button, .viewer-controls button { padding: 12px; border: 1px solid #555; border-radius: 8px; background: #222; color: white; }
+.viewer-page { min-height: 100dvh; padding: 24px; background: #090909; color: #fff; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.viewer-page h1, .viewer-page h2, .viewer-page p { margin: 0; }
+.viewer-page h1 { color: #aaa; font-size: clamp(1rem, 3vw, 2rem); }
+.viewer-page h2 { font-size: clamp(1.5rem, 5vw, 4rem); }
+.viewer-time { font-size: clamp(2.8rem, 17vw, 15rem); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.viewer-paused .viewer-time { color: #ffd086; }
+.viewer-connected { color: #9fe5b4; }
+.viewer-warning { color: #ffd086; }
+.viewer-controls { display: flex; gap: 12px; margin-top: 24px; }

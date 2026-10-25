@@ -1,3 +1,4 @@
+import type { TimerRunState } from '../stores/useShowTimerStore'
 import type { SegmentResult } from '../models/SegmentResult'
 import type { ShowSegment } from '../models/ShowSegment'
 
@@ -104,4 +105,29 @@ export function createSegmentResult(
     startedAt: startedAtIso,
     endedAt: endedAtIso,
   }
+}
+
+export function getPausedMs(run: TimerRunState, nowMs = run.nowMs) {
+  return run.pauses.reduce((sum, pause) => sum + Math.max(0, (pause.endedAtMs ?? nowMs) - pause.startedAtMs), 0)
+}
+
+export function getRunElapsedSeconds(run: TimerRunState, nowMs = run.nowMs) {
+  if (run.status !== 'running' && run.status !== 'paused') return 0
+  return Math.max(0, Math.floor((nowMs - run.startedAtMs - getPausedMs(run, nowMs)) / 1000))
+}
+
+export function pauseRun(run: TimerRunState, nowMs: number): TimerRunState {
+  if (run.status !== 'running') return run
+  return { ...run, status: 'paused', nowMs, pauses: [...run.pauses, {
+    id: crypto.randomUUID(), startedAtMs: nowMs, endedAtMs: null, note: '',
+  }] }
+}
+
+export function resumeRun(run: TimerRunState, nowMs: number): TimerRunState {
+  if (run.status !== 'paused') return run
+  return { ...run, status: 'running', nowMs, pauses: closePauses(run, nowMs) }
+}
+
+export function closePauses(run: TimerRunState, nowMs: number) {
+  return run.pauses.map(pause => pause.endedAtMs === null ? { ...pause, endedAtMs: nowMs } : pause)
 }

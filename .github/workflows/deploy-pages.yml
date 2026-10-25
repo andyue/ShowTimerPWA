@@ -32,8 +32,22 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and network tests
+        run: npm test
+
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: npm run test:e2e
+
       - name: Build
         run: npm run build:pages
+        env:
+          VITE_SYNC_URL: ${{ vars.VITE_SYNC_URL }}
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4

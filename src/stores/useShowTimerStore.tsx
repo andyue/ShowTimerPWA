@@ -3,11 +3,13 @@ import {
   useContext,
 } from 'react'
 
+import type { PauseRecord } from '../models/SegmentResult'
 import type { ShowProject } from '../models/ShowProject'
 
 export type TimerRunStatus =
   | 'idle'
   | 'running'
+  | 'paused'
   | 'finished'
 
 export interface TimerRunState {
@@ -16,6 +18,7 @@ export interface TimerRunState {
   startedAtIso: string
   startedAtMs: number
   nowMs: number
+  pauses: PauseRecord[]
 }
 
 export interface ShowTimerStoreValue {
@@ -51,6 +54,9 @@ export interface ShowTimerStoreValue {
   resetShow: () => void
   resetProject: () => void
 
+  pauseShow: () => void
+  resumeShow: () => void
+  updatePauseNote: (pauseId: string, note: string) => void
   startShow: () => void
   nextSegment: () => void
   resetRun: () => void

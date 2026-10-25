@@ -1,11 +1,14 @@
+import { isValidTimerRun } from '../services/RunValidation'
 import {
   useEffect,
   useState,
+  useRef,
   type ReactNode,
 } from 'react'
 
 import {
   createShowProject,
+  SHOWTIMER_FORMAT_VERSION,
   type ShowProject,
 } from '../models/ShowProject'
 
@@ -33,7 +36,11 @@ import {
 
 import {
   createSegmentResult,
-  getElapsedSeconds,
+  getRunElapsedSeconds,
+  getPausedMs,
+  pauseRun,
+  resumeRun,
+  closePauses,
 } from '../services/TimerEngine'
 
 import {
@@ -52,6 +59,7 @@ const idleTimerRun: TimerRunState = {
   startedAtIso: '',
   startedAtMs: 0,
   nowMs: 0,
+  pauses: [],
 }
 
 function createIdleTimerRun(
@@ -73,6 +81,7 @@ function createRunningTimerRun(
     startedAtIso: now.toISOString(),
     startedAtMs: now.getTime(),
     nowMs: now.getTime(),
+    pauses: [],
   }
 }
 
@@ -87,18 +96,28 @@ export function ShowTimerProvider({
     },
   )
 
+  const lastFinishedRun = useRef('')
+
   const [timerRun, setTimerRun] =
-    useState<TimerRunState>(idleTimerRun)
+    useState<TimerRunState>(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('showtimer-run') || 'null')
+        if (saved?.projectId === project.projectId && isValidTimerRun(saved.run, project.segments.length)) {
+          return { ...saved.run, nowMs: Date.now() }
+        }
+      } catch { /* Ignore invalid saved sessions. */ }
+      return idleTimerRun
+    })
 
   useEffect(() => {
-    if (timerRun.status !== 'running') {
+    if (timerRun.status !== 'running' && timerRun.status !== 'paused') {
       return
     }
 
     const intervalId = window.setInterval(
       () =>
         setTimerRun((current) =>
-          current.status === 'running'
+          (current.status === 'running' || current.status === 'paused')
             ? {
                 ...current,
                 nowMs: Date.now(),
@@ -111,6 +130,20 @@ export function ShowTimerProvider({
     return () =>
       window.clearInterval(intervalId)
   }, [timerRun.status])
+
+  const savedRunJson = JSON.stringify({ projectId: project.projectId, run: { ...timerRun, nowMs: 0 } })
+  useEffect(() => {
+    localStorage.setItem('showtimer-run', savedRunJson)
+  }, [savedRunJson])
+
+  function pauseShow() { setTimerRun(current => pauseRun(current, Date.now())) }
+  function resumeShow() { setTimerRun(current => resumeRun(current, Date.now())) }
+  function updatePauseNote(pauseId: string, note: string) {
+    setTimerRun(current => ({ ...current, pauses: current.pauses.map(p => p.id === pauseId ? { ...p, note } : p) }))
+    updateProject(current => ({ ...current, results: current.results.map(result => ({ ...result,
+      pauses: result.pauses?.map(p => p.id === pauseId ? { ...p, note } : p),
+    })) }))
+  }
 
   function replaceProject(
     nextProject: ShowProject,
@@ -128,6 +161,7 @@ export function ShowTimerProvider({
     setProject((current) => {
       const updatedProject: ShowProject = {
         ...updater(current),
+        version: SHOWTIMER_FORMAT_VERSION,
         updatedAt: new Date().toISOString(),
       }
 
@@ -145,6 +179,7 @@ export function ShowTimerProvider({
   }
 
   function addAct() {
+    if (timerRun.status === 'running' || timerRun.status === 'paused') return
     updateProject((current) => {
       const actNumber =
         countActs(current.segments) + 1
@@ -165,6 +200,7 @@ export function ShowTimerProvider({
   }
 
   function addIntermission() {
+    if (timerRun.status === 'running' || timerRun.status === 'paused') return
     updateProject((current) => {
       const intermissionCount =
         current.segments.filter(
@@ -243,6 +279,7 @@ export function ShowTimerProvider({
     segmentId: string,
     direction: 'up' | 'down',
   ) {
+    if (timerRun.status === 'running' || timerRun.status === 'paused') return
     updateProject((current) => {
       const currentIndex =
         current.segments.findIndex(
@@ -302,6 +339,7 @@ export function ShowTimerProvider({
   function deleteSegment(
     segmentId: string,
   ) {
+    if (timerRun.status === 'running' || timerRun.status === 'paused') return
     updateProject((current) => ({
       ...current,
       segments: current.segments
@@ -361,6 +399,7 @@ export function ShowTimerProvider({
   }
 
   function startShow() {
+    if (timerRun.status !== 'idle') return
     if (project.segments.length === 0) {
       return
     }
@@ -379,7 +418,7 @@ export function ShowTimerProvider({
 
   function nextSegment() {
     if (
-      timerRun.status !== 'running' ||
+      (timerRun.status !== 'running' && timerRun.status !== 'paused') ||
       timerRun.currentSegmentIndex < 0
     ) {
       return
@@ -395,10 +434,13 @@ export function ShowTimerProvider({
       return
     }
 
+    const runIdentity = `${timerRun.currentSegmentIndex}:${timerRun.startedAtIso}`
+    if (lastFinishedRun.current === runIdentity) return
+    lastFinishedRun.current = runIdentity
     const now = new Date()
     const elapsedSeconds =
-      getElapsedSeconds(
-        timerRun.startedAtMs,
+      getRunElapsedSeconds(
+        timerRun,
         now.getTime(),
       )
 
@@ -408,6 +450,10 @@ export function ShowTimerProvider({
       timerRun.startedAtIso,
       now.toISOString(),
     )
+
+    result.pauses = closePauses(timerRun, now.getTime())
+    result.pausedSeconds = Math.floor(getPausedMs(timerRun, now.getTime()) / 1000)
+    result.totalSeconds = Math.floor((now.getTime() - timerRun.startedAtMs) / 1000)
 
     updateProject((currentProject) => ({
       ...currentProject,
@@ -472,8 +518,8 @@ export function ShowTimerProvider({
 
     const now = new Date()
     const elapsedSeconds =
-      getElapsedSeconds(
-        timerRun.startedAtMs,
+      getRunElapsedSeconds(
+        timerRun,
         now.getTime(),
       )
 
@@ -544,6 +590,9 @@ export function ShowTimerProvider({
     importExcel,
     resetShow,
     resetProject,
+    pauseShow,
+    resumeShow,
+    updatePauseNote,
     startShow,
     nextSegment,
     resetRun,

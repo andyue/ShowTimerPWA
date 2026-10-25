@@ -1,3 +1,4 @@
+import { parsePauseRecords } from './PauseValidation'
 import type { CueMark } from '../models/CueMark'
 import {
   SHOWTIMER_FORMAT_NAME,
@@ -84,6 +85,9 @@ export function exportProjectToCsv(
       'Elapsed Seconds',
       'Started At',
       'Ended At',
+      'Paused Seconds',
+      'Total Seconds',
+      'Pauses JSON',
     ],
     ...project.results.map((result) => [
       result.segmentOrder + 1,
@@ -96,6 +100,9 @@ export function exportProjectToCsv(
       result.elapsedSeconds,
       result.startedAt,
       result.endedAt,
+      result.pausedSeconds ?? 0,
+      result.totalSeconds ?? result.elapsedSeconds,
+      JSON.stringify(result.pauses ?? []),
     ]),
     [],
     ['Marks'],
@@ -349,6 +356,9 @@ function parseResults(
           ) ?? segment.type,
         plannedSeconds,
         elapsedSeconds,
+        pausedSeconds: parseNonNegativeInteger(getCell(row, headers, 'Paused Seconds')) ?? 0,
+        totalSeconds: parseNonNegativeInteger(getCell(row, headers, 'Total Seconds')) ?? elapsedSeconds,
+        pauses: parsePauseRecords(getCell(row, headers, 'Pauses JSON')),
         startedAt:
           getCell(
             row,

@@ -3,7 +3,7 @@ import type { SegmentResult } from './SegmentResult'
 import type { ShowSegment } from './ShowSegment'
 
 export const SHOWTIMER_FORMAT_NAME = 'ShowTimer'
-export const SHOWTIMER_FORMAT_VERSION = 1
+export const SHOWTIMER_FORMAT_VERSION = 2
 
 export interface ShowProject {
   format: typeof SHOWTIMER_FORMAT_NAME

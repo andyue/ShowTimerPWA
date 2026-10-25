@@ -7,7 +7,7 @@ import {
 import {
   formatTimerSeconds,
   getDisplaySeconds,
-  getElapsedSeconds,
+  getRunElapsedSeconds,
 } from '../services/TimerEngine'
 import { useShowTimerStore } from '../stores/useShowTimerStore'
 
@@ -24,22 +24,22 @@ export default function QMarkPage() {
     timerRun.status === 'running'
 
   const currentSegment =
-    timerRun.status === 'running'
+    (timerRun.status === 'running' || timerRun.status === 'paused')
       ? project.segments[
           timerRun.currentSegmentIndex
         ]
       : undefined
 
   const elapsedSeconds =
-    timerRun.status === 'running'
-      ? getElapsedSeconds(
-          timerRun.startedAtMs,
+    (timerRun.status === 'running' || timerRun.status === 'paused')
+      ? getRunElapsedSeconds(
+          timerRun,
           timerRun.nowMs,
         )
       : 0
 
   const displaySeconds =
-    timerRun.status === 'running'
+    (timerRun.status === 'running' || timerRun.status === 'paused')
       ? getDisplaySeconds(
           currentSegment,
           elapsedSeconds,
@@ -153,7 +153,7 @@ export default function QMarkPage() {
                 : 'Intermission'}
             </span>
 
-            <strong>{currentSegment.name}</strong>
+            <strong>{currentSegment.name}{timerRun.status === 'paused' ? ' · 暫停中' : ''}</strong>
 
             <div className="qmark-live-time">
               {formatTimerSeconds(displaySeconds)}
