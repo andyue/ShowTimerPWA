@@ -24,7 +24,7 @@ npm run dev
 
 目前專案為瀏覽器網頁，尚未配置離線 Service Worker 或安裝用 manifest；加入主畫面不代表可保證離線啟動。
 
-## 使用與設定
+## 廣播 與 OSC Control測試中 -- 使用與設定
 
 - [雲端廣播部署與使用](docs/broadcast.md)
 - [QLab OSC 設定](docs/osc.md)
