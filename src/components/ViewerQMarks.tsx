@@ -4,12 +4,20 @@ import { formatTimerSeconds } from '../services/TimerEngine'
 
 const emptyMarks: CueMark[] = []
 
-export default memo(function ViewerQMarks({ marks = emptyMarks }: { marks?: CueMark[] }) {
+export default memo(function ViewerQMarks({ marks: receivedMarks }: { marks?: CueMark[] }) {
+  const marks = receivedMarks ?? emptyMarks
+  const initialized = useRef(false)
   const scrollArea = useRef<HTMLDivElement>(null)
   const previousIds = useRef(new Set<string>())
   useEffect(() => {
+    if (receivedMarks === undefined) return
     const added = marks.filter(mark => !previousIds.current.has(mark.id))
     previousIds.current = new Set(marks.map(mark => mark.id))
+    if (!initialized.current) {
+      initialized.current = true
+      if (scrollArea.current) scrollArea.current.scrollTop = 0
+      return
+    }
     const latest = added.reduce<CueMark | undefined>((last, mark) => !last || Date.parse(mark.createdAt) >= Date.parse(last.createdAt) ? mark : last, undefined)
     if (latest && scrollArea.current) {
       const row = Array.from(scrollArea.current.querySelectorAll<HTMLElement>('[data-mark-id]')).find(row => row.dataset.markId === latest.id)
@@ -19,7 +27,7 @@ export default memo(function ViewerQMarks({ marks = emptyMarks }: { marks?: CueM
         area.scrollTop += row.getBoundingClientRect().top - area.getBoundingClientRect().top - headerHeight
       }
     }
-  }, [marks])
+  }, [marks, receivedMarks])
 
   return <section className="viewer-marks" aria-label="Q Marks 唯讀清單">
     <header><h2>Q Marks</h2><span>{marks.length} 筆 · 即時同步／唯讀</span></header>
