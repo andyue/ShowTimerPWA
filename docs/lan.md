@@ -61,7 +61,30 @@
 
 GitHub Pages 的部署只更新線上網站，**不會自動更新 Windows／Mac 上下載的程式**。請在演出結束後更新，主控網頁、同步服務與觀看頁要一起更新。
 
-### 使用 Download ZIP 安裝（Windows 建議）
+### 下載更新工具（Windows／Mac 建議）
+
+Tools 最底下提供兩個下載按鈕，也可直接下載：
+
+- [Windows 更新工具 .cmd](https://andyue.github.io/ShowTimerPWA/downloads/Update-ShowTimer-Windows.cmd)
+- [Mac 更新工具 .command](https://andyue.github.io/ShowTimerPWA/downloads/Update-ShowTimer-Mac.command)
+
+操作步驟：
+
+1. 先安裝 Node.js 24，匯出 JSON Show File 備份。
+2. 停止廣播，在區網主機及 OSC 橋接的終端機按 Ctrl+C。
+3. Windows 雙擊下載的 `.cmd`；Mac 雙擊 `.command`，閱讀提示後按 Enter 開始。
+4. 工具會從 GitHub 下載**最近通過測試並成功部署的 main 版本**，安裝依賴、建置並啟動區網主機，全程需要網路。若剛推送的版本仍在部署，請等部署完成再更新。
+5. 主控重新整理 `http://127.0.0.1:8789/`，重新建立廣播，接收端掃新的 QR Code。OSC 如有需要，從新版資料夾另外啟動。
+
+Mac 從瀏覽器下載的 `.command` 可能沒有執行權限。第一次可在終端機輸入 `chmod +x `（尾端保留空白），把下載檔拖入終端機，再按 Enter；之後即可雙擊。也可以輸入 `zsh `，拖入該檔案後按 Enter 直接執行。不需要 sudo，也不需要關閉系統安全設定。
+
+這是可執行的更新腳本，尚非內含 Node.js 的 `.exe`／`.app` 安裝包。若系統對網路下載的腳本顯示提示，先核對它來自上述專案連結。
+
+新版安裝於使用者家目錄的 `ShowTimer/versions/版本號-隨機碼`，終端機會顯示完整位置；`ShowTimer/latest-installed.txt` 也記錄最近成功安裝的位置。日常離線啟動請到該資料夾執行 `Start-LAN-Windows.cmd` 或 `Start-LAN-Mac.command`。更新工具每次會重新下載與安裝，無需每天執行。
+
+工具不覆蓋舊程式、不修改瀏覽器資料、不強制關閉主機；若偵測到預設區網或 OSC 連接埠仍在使用，會停止更新。自訂區網埠須透過相同的 `LAN_PORT` 環境變數執行工具；自訂 OSC 埠請自行確認已停止。安裝失敗時保留舊版，修正網路等問題後可重試。要回復舊版，先關閉新版，再從舊資料夾的啟動檔啟動；必要時匯入 Show File 備份。
+
+### 手動使用 Download ZIP 安裝
 
 1. 先在主控匯出 JSON Show File 備份。
 2. 按「停止廣播」，在啟動服務的終端機按 Ctrl+C。若 OSC 橋接也在執行，一起停止。

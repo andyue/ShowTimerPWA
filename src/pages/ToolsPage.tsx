@@ -394,6 +394,11 @@ export default function ToolsPage() {
           <a href="https://github.com/andyue/ShowTimerPWA" target="_blank" rel="noopener noreferrer">GitHub 專案與配套程式 ↗</a>
           <p className="section-note">區網啟動程式、OSC 橋接與設定文件都在專案裡。下載整份專案可使用 GitHub 的 Code → Download ZIP。</p>
           <a href="https://github.com/andyue/ShowTimerPWA/blob/main/docs/lan.md" target="_blank" rel="noopener noreferrer">區網廣播操作步驟 ↗</a>
+          <div className="button-row">
+            <a href={`${import.meta.env.BASE_URL}downloads/Update-ShowTimer-Windows.cmd`} download>下載 Windows 更新工具</a>
+            <a href={`${import.meta.env.BASE_URL}downloads/Update-ShowTimer-Mac.command`} download>下載 Mac 更新工具</a>
+          </div>
+          <p className="section-note">先備份 Show File 並關閉區網主機與 OSC，再執行更新工具。會安裝最近通過測試與部署的版本並啟動，舊版保留。Mac 首次執行方式請看區網說明。</p>
           <a href="https://nodejs.org/download/release/latest-v24.x/" target="_blank" rel="noopener noreferrer">Node.js 24 官方下載 ↗</a>
           <p className="section-note">現場電腦需先安裝 Node.js 24。Windows 一般選 x64.msi；Mac 選 .pkg 安裝檔。下載這些檔案需要網際網路。</p>
         </section>

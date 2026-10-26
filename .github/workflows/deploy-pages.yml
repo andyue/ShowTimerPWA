@@ -16,7 +16,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  updater-test:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Test updater extraction and failure recovery
+        run: node --test tests/updater.test.mjs
+      - name: Check Mac launcher syntax
+        if: runner.os == 'macOS'
+        run: zsh -n public/downloads/Update-ShowTimer-Mac.command
+
   build:
+    needs: updater-test
     runs-on: ubuntu-latest
 
     steps:
