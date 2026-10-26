@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { isPrivateIPv4, lanAddresses } from './lan.mjs'
 import { readFile } from 'node:fs/promises'
 import { resolve, extname, sep } from 'node:path'
 import { createSocket } from 'node:dgram'
@@ -5,6 +7,8 @@ import { createServer } from 'node:http'
 import { randomBytes, randomUUID } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 import { WebSocketServer, WebSocket } from 'ws'
+
+export const allowedOscPeer = address => address === '127.0.0.1' || isPrivateIPv4(address)
 
 export const commands = new Set(['start', 'pause', 'resume', 'next', 'mark'])
 // Accept standard OSC messages and immediate bundles. Scheduled bundles are rejected.
@@ -47,7 +51,7 @@ export function decodeOsc(buffer, depth = 0) {
 
 export function createOscBridge({ wsPort = 8788, udpPort = 53001, udpHost = '127.0.0.1', pairingToken = randomBytes(24).toString('base64url'),
   origins = ['https://andyue.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:8788', 'http://127.0.0.1:8789'] } = {}) {
-  const root = resolve('dist')
+  const root = resolve(existsSync('dist-lan/index.html') ? 'dist-lan' : 'dist')
   const http = createServer(async (req, res) => {
     if (req.url === '/health') { res.writeHead(200); res.end('ShowTimer OSC bridge'); return }
     try {
@@ -75,7 +79,8 @@ export function createOscBridge({ wsPort = 8788, udpPort = 53001, udpHost = '127
     ws.on('close', () => { clearTimeout(timeout); if (controller === ws) controller = null })
     ws.on('error', () => {})
   })
-  udp.on('message', buffer => {
+  udp.on('message', (buffer, remote) => {
+    if (!allowedOscPeer(remote.address)) return
     if (!controller || controller.readyState !== WebSocket.OPEN) return
     for (const command of decodeOsc(buffer)) {
       const now = Date.now()
@@ -96,7 +101,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const bridge = createOscBridge({ wsPort: Number(process.env.OSC_WS_PORT || 8788), udpPort: Number(process.env.OSC_PORT || 53001),
     udpHost: process.env.OSC_HOST || '127.0.0.1', pairingToken: process.env.OSC_TOKEN,
     origins: (process.env.ALLOWED_ORIGINS || 'https://andyue.github.io,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:8788,http://127.0.0.1:8789').split(',') })
-  console.log('QLab OSC destination:', process.env.OSC_HOST || '127.0.0.1', process.env.OSC_PORT || 53001)
+  console.log('Local OSC destination: 127.0.0.1:' + (process.env.OSC_PORT || 53001))
+  if (process.env.OSC_HOST === '0.0.0.0') {
+    for (const entry of lanAddresses()) console.log(`TouchOSC / remote destination: ${entry.address}:${process.env.OSC_PORT || 53001} (${entry.name})`)
+    console.log('LAN mode: only private IPv4 and localhost senders are accepted. UDP has no authentication; use a trusted private network.')
+  }
   console.log('Bridge URL: ws://127.0.0.1:' + (process.env.OSC_WS_PORT || 8788))
   console.log('Pairing token (paste into ShowTimer Tools):', bridge.pairingToken)
 }

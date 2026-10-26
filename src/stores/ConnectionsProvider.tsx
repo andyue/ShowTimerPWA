@@ -130,7 +130,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
         if (stopped) return
         let data
         try { data = JSON.parse(e.data) } catch { return }
-        if (data.type === 'paired') setOscStatus('已連線 · QLab 就緒')
+        if (data.type === 'paired') setOscStatus('已連線 · OSC 就緒')
         if (data.type === 'pong') lastPong = Date.now()
         if (data.type === 'command' && typeof data.id === 'string' && !seen.has(data.id) && Math.abs(Date.now() - data.sentAt) < 2000) {
           if (seen.size > 500) seen.clear()

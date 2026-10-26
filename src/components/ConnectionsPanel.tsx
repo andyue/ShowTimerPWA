@@ -76,13 +76,13 @@ export default function ConnectionsPanel() {
       </div>}
     </section>
     <section className="tool-section connection-panel">
-      <h2>OSC Control · QLab</h2>
+      <h2>OSC Control · TouchOSC / QLab</h2>
       <p role="status">{oscStatus}</p>
       <label className="field"><span>本機橋接位址</span><input value={oscUrl} onChange={e => setOscUrl(e.target.value)} /></label>
       <label className="field"><span>橋接程式顯示的配對碼</span><input type="password" autoComplete="off" value={token} onChange={e => setToken(e.target.value)} /></label>
       <div className="button-row"><button disabled={!token} onClick={() => connectOsc(oscUrl, token)}>連接 OSC</button><button onClick={disconnectOsc}>中斷 OSC</button></div>
-      <p className="section-note">主控與 QLab 使用同一台 Mac，執行 npm run osc:bridge，並保持主控畫面在前景。若瀏覽器詢問區域網路權限，請允許。</p>
-      <details><summary>QLab 指令</summary><p>UDP 127.0.0.1:53001；不帶參數，或傳送數值 1。</p>
+      <p className="section-note">Windows 開啟 Start-OSC-Windows.cmd；Mac 開啟 Start-OSC-Mac.command。把終端機配對碼貼到上方，並保持主控畫面在前景。TouchOSC／OSC 遙控器請連同一區網，發送到終端機顯示的電腦 IP，UDP 53001。</p>
+      <details><summary>TouchOSC／QLab 指令</summary><p>同機 QLab 使用 127.0.0.1:53001；手機使用電腦的區網 IP:53001。按下傳送數值 1，放開的 0 會忽略，也支援不帶參數。</p>
         <code>/showtimer/start<br />/showtimer/pause<br />/showtimer/resume<br />/showtimer/next<br />/showtimer/mark</code>
         <p className="section-note">暫停中忽略 next；相同指令在 0.5 秒內去重。廣播觀看端不接收控制。</p>
       </details>

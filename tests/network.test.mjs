@@ -4,7 +4,7 @@ import { once } from 'node:events'
 import { createSocket } from 'node:dgram'
 import { WebSocket } from 'ws'
 import { createSyncServer, validSnapshot } from '../server/sync.mjs'
-import { createOscBridge, decodeOsc } from '../server/osc.mjs'
+import { createOscBridge, decodeOsc, allowedOscPeer } from '../server/osc.mjs'
 const origin = 'http://localhost:5173'
 const send = (ws, value) => ws.send(JSON.stringify(value))
 function next(ws, type, predicate = () => true) {
@@ -116,4 +116,33 @@ test('Q Mark snapshots validate fields and support shows larger than the old 16 
     message = next(viewer, 'snapshot'); send(host, { type: 'publish', snapshot: { ...snapshot, cueMarks: [] } })
     assert.deepEqual((await message).snapshot.cueMarks, [])
   } finally { await service.close() }
+})
+
+
+test('OSC LAN mode accepts private-network controllers and ignores released TouchOSC buttons', async () => {
+  for (const ip of ['127.0.0.1', '10.0.0.2', '172.16.0.2', '192.168.1.2']) assert.equal(allowedOscPeer(ip), true)
+  for (const ip of ['8.8.8.8', '172.32.0.2', '0.0.0.0']) assert.equal(allowedOscPeer(ip), false)
+  const bridge = createOscBridge({ wsPort: 0, udpPort: 0, udpHost: '0.0.0.0', pairingToken: 'touch-test' })
+  await Promise.all([once(bridge.http, 'listening'), once(bridge.udp, 'listening')])
+  const udp = createSocket('udp4')
+  try {
+    assert.equal(bridge.udp.address().address, '0.0.0.0')
+    assert.equal(bridge.http.address().address, '127.0.0.1')
+    const host = await connect(bridge.http.address().port)
+    let message = next(host, 'paired'); send(host, { type: 'pair', token: 'touch-test' }); await message
+    const { lanAddresses } = await import('../server/lan.mjs')
+    const destination = lanAddresses()[0]?.address || '127.0.0.1'
+    const received = []; host.on('message', raw => { const value = JSON.parse(raw); if (value.type === 'command') received.push(value.command) })
+    for (const command of ['start', 'pause', 'resume', 'next', 'mark']) {
+      const press = Buffer.alloc(4); press.writeFloatBE(1)
+      const packet = Buffer.concat([oscString('/showtimer/' + command), oscString(',f'), press])
+      message = next(host, 'command')
+      udp.send(packet, bridge.udp.address().port, destination)
+      assert.equal((await message).command, command)
+      udp.send(osc(command, 0), bridge.udp.address().port, destination)
+    }
+    await new Promise(resolve => setTimeout(resolve, 100))
+    assert.deepEqual(received, ['start', 'pause', 'resume', 'next', 'mark'])
+    host.close()
+  } finally { udp.close(); await bridge.close() }
 })

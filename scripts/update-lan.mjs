@@ -61,7 +61,7 @@ export async function installLatest({ root = path.join(homedir(), 'ShowTimer'), 
     await execute('npm', ['ci'], destination)
     await execute('npm', ['run', 'build:lan'], destination)
     await writeFile(path.join(root, 'latest-installed.txt'), destination + '\n')
-    console.log(`\nInstalled: ${destination}\nOld versions have been retained.\nFor daily use, open Start-LAN-Windows.cmd or Start-LAN-Mac.command in this folder.`)
+    console.log(`\nInstalled: ${destination}\nOld versions have been retained.\nFor daily use, open Start-LAN-Windows.cmd / Start-LAN-Mac.command or Start-OSC-Windows.cmd / Start-OSC-Mac.command in this folder.`)
     return destination
   } catch (error) {
     console.error(`Update failed. Old versions are unchanged. Incomplete files: ${destination}`)
@@ -71,6 +71,7 @@ export async function installLatest({ root = path.join(homedir(), 'ShowTimer'), 
   }
 }
 async function main() {
+  const oscMode = process.argv.includes('--osc')
   if (Number(process.versions.node.split('.')[0]) < 24) throw new Error('Please install Node.js 24 or newer first.')
   console.log('ShowTimer update — export your Show File backup before updating.\nInternet is required. Existing program folders and browser data are not overwritten.')
   const port = Number(process.env.LAN_PORT || 8789)
@@ -79,8 +80,14 @@ async function main() {
   await assertPortFree(8788)
   const destination = await installLatest()
   await assertPortFree(port)
-  console.log(`\nStarting the new version. Refresh http://127.0.0.1:${port}/ and create a new broadcast QR code.\nPress Ctrl+C to stop. Start OSC separately if needed.`)
-  await run(process.execPath, ['server/lan.mjs'], destination)
+  if (!oscMode) console.log(`\nStarting the new version. Refresh http://127.0.0.1:${port}/ and create a new broadcast QR code.\nPress Ctrl+C to stop. Start OSC separately if needed.`)
+  if (oscMode) {
+    process.env.OSC_HOST = '0.0.0.0'
+    console.log('Starting OSC in LAN mode. Paste the pairing token into ShowTimer Tools. Local controller: http://127.0.0.1:8788/')
+    await run(process.execPath, ['server/osc.mjs'], destination)
+  } else {
+    await run(process.execPath, ['server/lan.mjs'], destination)
+  }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   main().catch(error => { console.error(error.message); process.exitCode = 1 })

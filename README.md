@@ -28,7 +28,7 @@ npm run dev
 - 執行中與暫停中的狀態可在同一瀏覽器重新整理後恢復。進行中不允許新增、刪除或重排段落。
 - JSON v2 與 CSV 保留暫停明細，也可讀取既有 v1 檔案。
 - 一台主控、多台唯讀觀看；預設包含全部 Q Marks 與備註，新增／修改／刪除即時同步；支援 QR Code、晚加入、重連、時間校正與離線提示。
-- QLab OSC 控制：start、pause、resume、next、mark。橋接程式需要在主控 Mac 上執行。
+- TouchOSC／QLab OSC 控制：start、pause、resume、next、mark。橋接程式需要在主控 Mac 上執行。
 
 目前專案為瀏覽器網頁，尚未配置離線 Service Worker 或安裝用 manifest；加入主畫面不代表可保證離線啟動。
 
@@ -36,7 +36,7 @@ npm run dev
 
 - [區網廣播操作步驟](docs/lan.md)
 - [雲端廣播部署與使用](docs/broadcast.md)
-- [QLab OSC 設定](docs/osc.md)
+- [TouchOSC／QLab OSC 設定](docs/osc.md)
 
 雲端廣播需先建立同步服務。未設定服務時，本機計時與暫停功能仍可用。
 
@@ -58,3 +58,5 @@ npm run build:pages
 
 推送 `main` 後 GitHub Actions 先執行 lint、單元／整合測試與瀏覽器測試，再建置並發布 GitHub Pages。
 同步服務為獨立 Node.js 程式，不會由 Pages 自動代管；OSC 橋接也不會部署至 Pages。
+
+Windows／Mac 的 OSC 安裝更新工具與日常啟動檔，可見 [OSC 控制說明](docs/osc.md)。支援同一區網的 TouchOSC 與 OSC/UDP 遙控器。

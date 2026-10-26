@@ -87,7 +87,7 @@ test('QLab-style UDP commands control paired browser without duplicate pause or 
   const tools = page.locator('.desktop-layout .tools-column')
   await tools.getByLabel('橋接程式顯示的配對碼').fill('e2e-pairing')
   await tools.getByRole('button', { name: '連接 OSC', exact: true }).click()
-  await expect(tools.getByText('已連線 · QLab 就緒')).toBeVisible()
+  await expect(tools.getByText('已連線 · OSC 就緒')).toBeVisible()
   const udp = createSocket('udp4')
   const send = (command: string) => new Promise<void>((resolve, reject) => {
     const address = Buffer.from(`/showtimer/${command}\0`)
