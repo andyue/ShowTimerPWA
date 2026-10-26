@@ -389,6 +389,14 @@ export default function ToolsPage() {
           </button>
         </section>
         <ConnectionsPanel />
+        <section className="tool-section resource-links">
+          <h2>下載與使用說明</h2>
+          <a href="https://github.com/andyue/ShowTimerPWA" target="_blank" rel="noopener noreferrer">GitHub 專案與配套程式 ↗</a>
+          <p className="section-note">區網啟動程式、OSC 橋接與設定文件都在專案裡。下載整份專案可使用 GitHub 的 Code → Download ZIP。</p>
+          <a href="https://github.com/andyue/ShowTimerPWA/blob/main/docs/lan.md" target="_blank" rel="noopener noreferrer">區網廣播操作步驟 ↗</a>
+          <a href="https://nodejs.org/download/release/latest-v24.x/" target="_blank" rel="noopener noreferrer">Node.js 24 官方下載 ↗</a>
+          <p className="section-note">現場電腦需先安裝 Node.js 24。Windows 一般選 x64.msi；Mac 選 .pkg 安裝檔。下載這些檔案需要網際網路。</p>
+        </section>
       </div>
     </section>
   )

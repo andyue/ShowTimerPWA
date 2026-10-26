@@ -63,7 +63,7 @@ export default function ConnectionsPanel() {
         <button onClick={stopBroadcast}>停止廣播</button>
       </div>
       <details className="lan-help"><summary>只想在同一個 Wi-Fi 廣播？</summary>
-        <p>在現場電腦啟動「Start-LAN-Windows.cmd」或執行 npm run lan，再開啟終端機顯示的本機網址。網頁與廣播都由該電腦提供，不需固定 IP 或雲端服務。</p>
+        <p>先安裝 <a href="https://nodejs.org/download/release/latest-v24.x/" target="_blank" rel="noopener noreferrer">Node.js 24</a>，在現場電腦啟動「Start-LAN-Windows.cmd」或執行 npm run lan，再開啟終端機顯示的本機網址。網頁與廣播都由該電腦提供，不需固定 IP 或雲端服務。</p>
       </details>
       </>}
       {link && <div className="broadcast-share">

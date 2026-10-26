@@ -1054,3 +1054,8 @@ button:disabled {
 .connection-panel select { min-height: 48px; }
 .share-link { font-size: 0.8rem; }
 .lan-help p { margin-top: 10px; line-height: 1.5; }
+
+.resource-links { display: grid; gap: 12px; }
+.resource-links h2, .resource-links p { margin: 0; }
+.resource-links a, .lan-help a { color: #9cd7ff; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.resource-links a { min-height: 44px; display: flex; align-items: center; }

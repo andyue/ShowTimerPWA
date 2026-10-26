@@ -4,7 +4,7 @@
 
 ## 啟動
 
-QLab 與 ShowTimer 主控放在同一台 Mac。安裝 Node.js 24，在專案目錄執行：
+QLab 與 ShowTimer 主控放在同一台 Mac。安裝 [Node.js 24](https://nodejs.org/download/release/latest-v24.x/)，在專案目錄執行：
 
 ```sh
 npm ci

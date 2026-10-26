@@ -4,7 +4,7 @@ React / TypeScript 演出計時器，前端維持 GitHub Pages 部署。
 
 ## 區網廣播試用
 
-現場電腦與手機連同一個 Wi-Fi。Windows 安裝 Node.js 24 後，雙擊 `Start-LAN-Windows.cmd`；首次會下載依賴，之後可無外網啟動。
+現場電腦與手機連同一個 Wi-Fi。Windows 安裝 [Node.js 24](https://nodejs.org/download/release/latest-v24.x/) 後，雙擊 `Start-LAN-Windows.cmd`；首次會下載依賴，之後可無外網啟動。
 在現場電腦開啟 `http://127.0.0.1:8789/`，Tools → 區網廣播 → 開啟區網廣播，再用手機掃碼。
 Mac／命令列可使用 `npm ci`（首次）與 `npm run lan`。
 
@@ -12,7 +12,7 @@ Mac／命令列可使用 `npm ci`（首次）與 `npm run lan`。
 
 ## 本機開發
 
-需要 Node.js 24。
+需要 [Node.js 24](https://nodejs.org/download/release/latest-v24.x/)。
 
 ```sh
 npm ci

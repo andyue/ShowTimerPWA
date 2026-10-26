@@ -4,8 +4,9 @@
 
 ## 第一次準備（需要外網下載）
 
-1. 在現場電腦安裝 **Node.js 24**。
-2. 下載此專案最新版本並完整解壓縮到一個資料夾。不要直接在 ZIP 裡執行。
+1. 在現場電腦安裝 **[Node.js 24 官方下載](https://nodejs.org/download/release/latest-v24.x/)**。
+   Windows 的 Dell 電腦選擇檔名以 `x64.msi` 結尾的安裝檔；Mac 選 `.pkg`。
+2. 從 [GitHub 專案](https://github.com/andyue/ShowTimerPWA) 的 Code → Download ZIP 下載最新版本並完整解壓縮到一個資料夾。不要直接在 ZIP 裡執行。
 3. Windows 雙擊 **Start-LAN-Windows.cmd**；Mac 可在終端機進入專案執行 `npm ci`，再執行 `npm run lan`（也提供 Start-LAN-Mac.command）。
 4. Windows 啟動檔會在首次使用時下載套件，接著建置並啟動服務。首次下載後，日常啟動不需外網。
 5. Windows 防火牆若詢問 Node.js 網路存取，只允許你信任的 **私人網路**。若 Wi-Fi 被設定成公用網路，先確認是你信任的場地網路，再於 Windows 設定改成私人網路；不必停用防火牆。
