@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import { createConnection } from 'node:net'
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
-import { homedir, tmpdir } from 'node:os'
+import { homedir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -38,7 +38,8 @@ export async function installLatest({ root = path.join(homedir(), 'ShowTimer'), 
   if (!/^[a-f0-9]{40}$/.test(revision || '')) throw new Error('No verified release found. Please try again after deployment finishes.')
   await mkdir(path.join(root, 'versions'), { recursive: true })
   const destination = await mkdtemp(path.join(root, 'versions', `${revision.slice(0, 7)}-`))
-  const temporary = await mkdtemp(path.join(tmpdir(), 'showtimer-update-'))
+  const archiveName = '.showtimer-update.tar.gz'
+  const archivePath = path.join(destination, archiveName)
   try {
     console.log(`Downloading tested version ${revision.slice(0, 7)}...`)
     const archive = await request(`https://codeload.github.com/${repo}/tar.gz/${revision}`, fetchImpl)
@@ -49,9 +50,10 @@ export async function installLatest({ root = path.join(homedir(), 'ShowTimer'), 
       if (bytes > maxArchiveBytes) throw new Error('Download exceeds the expected archive size.')
       chunks.push(chunk)
     }
-    const archivePath = path.join(temporary, 'release.tar.gz')
     await writeFile(archivePath, Buffer.concat(chunks))
-    await execute('tar', ['-xzf', archivePath, '--strip-components=1', '-C', destination], temporary)
+    // Windows tar can lose Unicode in command-line paths. Use a relative archive
+    // name and let Node set the working directory using the Unicode Windows API.
+    await execute('tar', ['-xzf', archiveName, '--strip-components=1'], destination)
     const manifest = JSON.parse(await readFile(path.join(destination, 'package.json'), 'utf8'))
     if (manifest.name !== 'showtimerpwa' || !manifest.scripts?.['build:lan']) throw new Error('Unexpected release contents.')
     await readFile(path.join(destination, 'package-lock.json'))
@@ -65,7 +67,7 @@ export async function installLatest({ root = path.join(homedir(), 'ShowTimer'), 
     console.error(`Update failed. Old versions are unchanged. Incomplete files: ${destination}`)
     throw error
   } finally {
-    await rm(temporary, { recursive: true, force: true })
+    await rm(archivePath, { force: true })
   }
 }
 async function main() {
