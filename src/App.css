@@ -1059,3 +1059,33 @@ button:disabled {
 .resource-links h2, .resource-links p { margin: 0; }
 .resource-links a, .lan-help a { color: #9cd7ff; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .resource-links a { min-height: 44px; display: flex; align-items: center; }
+
+.viewer-with-marks { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; gap: 24px; height: 100dvh; overflow: hidden; }
+.viewer-timer-panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; overflow-y: auto; }
+.viewer-with-marks .viewer-time { font-size: clamp(2.5rem, 8vw, 9rem); }
+.viewer-with-marks .viewer-timer-panel h2 { font-size: clamp(1.5rem, 3vw, 3rem); }
+.viewer-marks { min-width: 0; min-height: 0; display: flex; flex-direction: column; border: 1px solid #666; border-radius: 14px; overflow: hidden; text-align: left; }
+.viewer-marks header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid #666; }
+.viewer-marks header h2 { font-size: 1.5rem; }
+.viewer-marks header span { color: #aaa; font-size: 0.85rem; }
+.viewer-marks-scroll { flex: 1; min-height: 0; overflow: auto; position: relative; }
+.viewer-marks-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: clamp(1rem, 1.5vw, 1.5rem); }
+.viewer-marks-table th { position: sticky; top: 0; z-index: 1; background: #222; }
+.viewer-marks-table th, .viewer-marks-table td { padding: 12px 10px; border-bottom: 1px solid #444; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.viewer-marks-table th:first-child, .viewer-marks-table td:first-child { width: 1%; white-space: nowrap; }
+.viewer-mark-time { color: #00ff22; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.viewer-mark-note { white-space: pre-wrap; min-width: 6rem; }
+.viewer-mark-placeholder { color: #888; }
+.viewer-marks-empty { color: #aaa; text-align: center !important; padding: 32px 12px !important; }
+@media (max-width: 900px) {
+  .viewer-with-marks { padding: 12px; gap: 12px; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(180px, 1fr); }
+  .viewer-timer-panel { max-height: 52dvh; gap: 6px; justify-content: flex-start; }
+  .viewer-with-marks .viewer-time { font-size: clamp(2.5rem, 14vw, 5rem); line-height: 1; }
+  .viewer-with-marks .viewer-controls { margin-top: 4px; }
+  .viewer-with-marks .viewer-controls button { padding: 8px; }
+  .viewer-with-marks .pause-banner { padding: 8px; gap: 4px; font-size: 1rem; }
+  .viewer-with-marks .pause-banner strong { font-size: 1.15rem; }
+  .viewer-marks header { padding: 10px; }
+  .viewer-marks-table { font-size: 0.95rem; }
+  .viewer-marks-table th, .viewer-marks-table td { padding: 10px 6px; }
+}

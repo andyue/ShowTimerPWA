@@ -1,8 +1,10 @@
+import type { CueMark } from '../models/CueMark'
 import type { ShowProject } from '../models/ShowProject'
 import type { TimerRunState } from '../stores/useShowTimerStore'
 import { getPausedMs } from './TimerEngine'
 
 export interface BroadcastSnapshot {
+  cueMarks?: CueMark[]
   projectName: string
   segment: { name: string; type: 'act' | 'intermission'; plannedSeconds: number } | null
   nextSegmentName: string
@@ -19,6 +21,11 @@ export function makeSnapshot(project: ShowProject, run: TimerRunState, nowMs: nu
   const segment = project.segments[run.currentSegmentIndex >= 0 ? run.currentSegmentIndex : 0]
   const pausedMs = active ? getPausedMs(run, nowMs) : 0
   return {
+    cueMarks: [...project.cueMarks].sort((a, b) => a.segmentOrder - b.segmentOrder || a.elapsedSeconds - b.elapsedSeconds || Date.parse(a.createdAt) - Date.parse(b.createdAt)).map(mark => ({
+      id: mark.id, label: mark.label, segmentId: mark.segmentId, segmentOrder: mark.segmentOrder,
+      segmentName: mark.segmentName, segmentType: mark.segmentType, elapsedSeconds: mark.elapsedSeconds,
+      note: mark.note, createdAt: mark.createdAt,
+    })),
     projectName: project.projectName,
     segment: segment && run.status !== 'finished' ? { name: segment.name, type: segment.type, plannedSeconds: segment.plannedSeconds } : null,
     nextSegmentName: project.segments[(run.currentSegmentIndex >= 0 ? run.currentSegmentIndex : 0) + 1]?.name ?? '',

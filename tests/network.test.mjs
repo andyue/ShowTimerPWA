@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { createSocket } from 'node:dgram'
 import { WebSocket } from 'ws'
-import { createSyncServer } from '../server/sync.mjs'
+import { createSyncServer, validSnapshot } from '../server/sync.mjs'
 import { createOscBridge, decodeOsc } from '../server/osc.mjs'
 const origin = 'http://localhost:5173'
 const send = (ws, value) => ws.send(JSON.stringify(value))
@@ -95,4 +95,25 @@ test('persistent room survives a service restart and keeps credentials and last 
     const reconnected = await connect(service.http.address().port)
     message = next(reconnected, 'joined'); send(reconnected, { type: 'join', id: room.id, token: room.hostToken }); await message
   } finally { await service.close(); await rm(directory, { recursive: true, force: true }) }
+})
+
+
+test('Q Mark snapshots validate fields and support shows larger than the old 16 KB limit', async () => {
+  const cueMarks = Array.from({ length: 100 }, (_, index) => ({ id: `m${index}`, label: `M${index + 1}`, segmentId: 'act', segmentOrder: 0, segmentName: 'Act 1', segmentType: 'act', elapsedSeconds: index, note: '音樂與燈光提示'.repeat(30), createdAt: new Date().toISOString() }))
+  const state = { ...snapshot, cueMarks }
+  assert.equal(validSnapshot(state), true)
+  assert.equal(validSnapshot({ ...snapshot, cueMarks: [{ ...cueMarks[0], note: {} }] }), false)
+  assert.equal(validSnapshot({ ...snapshot, cueMarks: [cueMarks[0], cueMarks[0]] }), false)
+  assert.ok(Buffer.byteLength(JSON.stringify(state)) > 16384)
+  const service = createSyncServer({ port: 0 }); await once(service.http, 'listening')
+  try {
+    const host = await connect(service.http.address().port)
+    let message = next(host, 'created'); send(host, { type: 'create' }); const room = await message
+    message = next(host, 'published'); send(host, { type: 'publish', snapshot: state }); await message
+    const viewer = await connect(service.http.address().port)
+    message = next(viewer, 'snapshot'); send(viewer, { type: 'join', id: room.id, token: room.viewerToken })
+    assert.deepEqual((await message).snapshot.cueMarks, cueMarks)
+    message = next(viewer, 'snapshot'); send(host, { type: 'publish', snapshot: { ...snapshot, cueMarks: [] } })
+    assert.deepEqual((await message).snapshot.cueMarks, [])
+  } finally { await service.close() }
 })

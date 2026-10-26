@@ -8,13 +8,28 @@ import { WebSocketServer, WebSocket } from 'ws'
 const token = () => randomBytes(24).toString('base64url')
 const send = (ws, value) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(value)) }
 
+export function validCueMarks(marks) {
+  if (marks === undefined) return true // Compatibility with older controllers.
+  if (!Array.isArray(marks)) return false
+  const ids = new Set()
+  return marks.every(mark => {
+    if (!mark || typeof mark !== 'object' || typeof mark.id !== 'string' || ids.has(mark.id) ||
+      typeof mark.label !== 'string' || typeof mark.segmentId !== 'string' || typeof mark.segmentName !== 'string' ||
+      !Number.isInteger(mark.segmentOrder) || mark.segmentOrder < 0 || !['act', 'intermission'].includes(mark.segmentType) ||
+      !Number.isFinite(mark.elapsedSeconds) || mark.elapsedSeconds < 0 || typeof mark.note !== 'string' ||
+      typeof mark.createdAt !== 'string' || !Number.isFinite(Date.parse(mark.createdAt))) return false
+    ids.add(mark.id)
+    return true
+  })
+}
+
 export function validSnapshot(s) {
   if (!s || typeof s.projectName !== 'string' || s.projectName.length > 500 ||
       !['idle', 'running', 'paused', 'finished'].includes(s.status) ||
       !Number.isFinite(s.elapsedMs) || s.elapsedMs < 0 ||
       !Number.isFinite(s.pausedMs) || s.pausedMs < 0 ||
       !Number.isFinite(s.currentPauseMs) || s.currentPauseMs < 0 ||
-      !Number.isFinite(s.capturedAtMs) || typeof s.nextSegmentName !== 'string') return false
+      !Number.isFinite(s.capturedAtMs) || typeof s.nextSegmentName !== 'string' || !validCueMarks(s.cueMarks)) return false
   return s.segment === null || (s.segment && typeof s.segment.name === 'string' && s.segment.name.length <= 500 &&
     ['act', 'intermission'].includes(s.segment.type) && Number.isFinite(s.segment.plannedSeconds) && s.segment.plannedSeconds >= 0)
 }
@@ -40,7 +55,7 @@ export function createSyncServer({ port = 8787, host = '127.0.0.1', origins = ['
     res.writeHead(req.url === '/health' ? 200 : 404, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ service: 'ShowTimer sync', ok: req.url === '/health' }))
   }))
-  const wss = new WebSocketServer({ server: http, maxPayload: 16384, verifyClient: ({ origin, req }) => origins.includes(origin) && allowRequest(req) })
+  const wss = new WebSocketServer({ server: http, maxPayload: 8 * 1024 * 1024, verifyClient: ({ origin, req }) => origins.includes(origin) && allowRequest(req) })
   function broadcast(room) {
     const message = { type: 'snapshot', snapshot: room.snapshot, serverNow: Date.now(), hostOnline: !!room.host,
       updatedAt: room.updatedAt, revision: room.revision }

@@ -26,7 +26,12 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
   const joined = useRef(false)
   const publish = useEffectEvent(() => {
     if (joined.current && broadcastSocket.current?.readyState === WebSocket.OPEN) {
-      broadcastSocket.current.send(JSON.stringify({ type: 'publish', snapshot: makeSnapshot(store.project, store.timerRun, Date.now(), offset.current) }))
+      const message = JSON.stringify({ type: 'publish', snapshot: makeSnapshot(store.project, store.timerRun, Date.now(), offset.current) })
+      if (new TextEncoder().encode(message).byteLength > 8 * 1024 * 1024) {
+        setBroadcastStatus('廣播資料超過 8 MB，請先匯出備份並減少 Q Mark 備註內容；本機計時仍可使用')
+        return
+      }
+      broadcastSocket.current.send(message)
     }
   })
   // nowMs is just a local display tick; publish transitions immediately and heartbeat every 3s.
@@ -67,6 +72,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
           roomRef.current = next; setRoom(next)
           sessionStorage.setItem('showtimer-broadcast', JSON.stringify(next))
         }
+        if (data.type === 'published') setBroadcastStatus('廣播中')
         if (data.type === 'created' || data.type === 'joined') {
           retryDelay = 1000; joined.current = true; setBroadcastStatus('廣播中'); publish()
         }

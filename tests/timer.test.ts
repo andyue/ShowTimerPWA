@@ -71,3 +71,16 @@ test('unencrypted LAN sockets are limited to the matching HTTP private-network o
   assert.throws(() => validateSocketUrl('ws://192.168.1.10:8789', true, 'http://192.168.1.10:8789/'))
   assert.equal(validateSocketUrl('wss://sync.example.com'), 'wss://sync.example.com/')
 })
+
+
+test('broadcast always includes all Q Marks and notes in the same order as the controller', () => {
+  const project = createShowProject(); project.segments.push(createAct('Act 1'))
+  const base = { segmentId: 'act', segmentOrder: 0, segmentName: 'Act 1', segmentType: 'act' as const, note: 'Cue note', createdAt: new Date().toISOString() }
+  project.cueMarks = [{ ...base, id: 'b', label: 'M2', elapsedSeconds: 20 }, { ...base, id: 'a', label: 'M1', elapsedSeconds: 10 }]
+  const result = makeSnapshot(project, run(), 6000)
+  assert.deepEqual(result.cueMarks?.map(m => m.id), ['a', 'b'])
+  assert.equal(result.cueMarks?.[0].note, 'Cue note')
+  assert.equal(project.cueMarks[0].id, 'b')
+  project.cueMarks = []
+  assert.deepEqual(makeSnapshot(project, run(), 6000).cueMarks, [])
+})

@@ -1,3 +1,4 @@
+import ViewerQMarks from '../components/ViewerQMarks'
 import { useEffect, useState } from 'react'
 import { projectSnapshot, validateSocketUrl, type BroadcastSnapshot } from '../services/Broadcast'
 import { formatTimerSeconds } from '../services/TimerEngine'
@@ -81,7 +82,8 @@ export default function ViewerPage() {
   const times = snapshot ? projectSnapshot(snapshot, clock.now + clock.offset) : null
   const elapsed = (times?.elapsedMs ?? 0) / 1000
   const display = snapshot?.segment?.type === 'intermission' ? Math.max(0, snapshot.segment.plannedSeconds - Math.floor(elapsed)) : elapsed
-  return <main className={`viewer-page ${snapshot?.status === 'paused' ? 'viewer-paused' : ''}`}>
+  return <main className={`viewer-page viewer-with-marks ${snapshot?.status === 'paused' ? 'viewer-paused' : ''}`}>
+    <section className="viewer-timer-panel">
     <p className={status.startsWith('已同步') ? 'viewer-connected' : 'viewer-warning'} role="status">{status}</p>
     <h1>{snapshot?.projectName || 'ShowTimer'}</h1>
     <h2>{snapshot?.status === 'finished' ? '演出已完成' : snapshot?.segment?.name || '等待廣播'}</h2>
@@ -94,5 +96,7 @@ export default function ViewerPage() {
       <button onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen?.().catch(() => {}) }}>全螢幕</button></div>
     {!window.isSecureContext && <p className="section-note">區網觀看模式：請在裝置設定中關閉自動鎖定，並保持此頁在前景。</p>}
     <small>{wakeStatus}</small>
+    </section>
+    <ViewerQMarks marks={snapshot?.cueMarks} />
   </main>
 }

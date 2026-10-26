@@ -42,8 +42,9 @@ export default function ConnectionsPanel() {
     <section className="tool-section connection-panel">
       <h2>{lan ? '區網廣播' : '計時畫面廣播'}</h2>
       <p role="status">{broadcastStatus}</p>
+      <p className="section-note">計時、Q Marks 與備註會一起廣播，接收端為唯讀。</p>
       {lan ? <>
-        <p>讓手機連同一個 Wi-Fi，開啟廣播後掃碼觀看。</p>
+        <p>讓手機連同一個 Wi-Fi，開啟廣播後掃碼觀看計時與 Q Marks。</p>
         {lan.viewerBases.length > 0 ? <label className="field"><span>手機使用的區網位址</span>
           <select value={room?.viewerBaseUrl || viewerBase} disabled={!!room} onChange={e => setViewerBase(e.target.value)}>
             {lan.viewerBases.map(a => <option key={a.url} value={a.url}>{a.address}（{a.name}）</option>)}
