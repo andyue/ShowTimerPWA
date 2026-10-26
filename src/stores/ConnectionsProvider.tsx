@@ -16,7 +16,7 @@ function savedRoom(): BroadcastRoom | null {
 export default function ConnectionsProvider({ children }: { children: ReactNode }) {
   const store = useShowTimerStore()
   const [room, setRoom] = useState<BroadcastRoom | null>(savedRoom)
-  const [request, setRequest] = useState<{ url: string; key: string } | null>(null)
+  const [request, setRequest] = useState<{ url: string; key: string; viewerBaseUrl?: string } | null>(null)
   const [broadcastStatus, setBroadcastStatus] = useState('尚未開啟')
   const [osc, setOsc] = useState<{ url: string; token: string } | null>(null)
   const [oscStatus, setOscStatus] = useState('未連線')
@@ -63,7 +63,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
           }
         }
         if (data.type === 'created') {
-          const next = { url: url!, id: data.id, hostToken: data.hostToken, viewerToken: data.viewerToken }
+          const next = { viewerBaseUrl: request?.viewerBaseUrl, url: url!, id: data.id, hostToken: data.hostToken, viewerToken: data.viewerToken }
           roomRef.current = next; setRoom(next)
           sessionStorage.setItem('showtimer-broadcast', JSON.stringify(next))
         }
@@ -149,11 +149,11 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
   }, [osc])
 
   return <ConnectionsContext.Provider value={{ room, broadcastStatus, oscStatus,
-    startBroadcast: (raw, key) => {
+    startBroadcast: (raw, key, viewerBaseUrl) => {
       try {
         const validated = validateSocketUrl(raw)
         roomRef.current = null; setRoom(null); sessionStorage.removeItem('showtimer-broadcast')
-        setRequest({ url: validated, key })
+        setRequest({ url: validated, key, viewerBaseUrl })
       } catch (error) { setBroadcastStatus((error as Error).message) }
     },
     stopBroadcast: () => {

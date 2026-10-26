@@ -4,7 +4,7 @@ import type { BroadcastRoom } from '../services/Broadcast'
 export interface Connections {
   room: BroadcastRoom | null
   broadcastStatus: string
-  startBroadcast: (url: string, key: string) => void
+  startBroadcast: (url: string, key: string, viewerBaseUrl?: string) => void
   stopBroadcast: () => void
   oscStatus: string
   connectOsc: (url: string, token: string) => void

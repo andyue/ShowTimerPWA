@@ -1,5 +1,7 @@
 # 計時畫面廣播
 
+如果只需同一個場地／Wi-Fi 廣播，可以改用 [區網模式](lan.md)，不必部署雲端服務。
+
 ## 架構
 
 GitHub Pages 提供主控與觀看網頁。`server/sync.mjs` 是可部署在託管平台的 Node.js WebSocket 服務，保存目前狀態並推送給觀看端。無需把整個前端搬離 GitHub Pages。

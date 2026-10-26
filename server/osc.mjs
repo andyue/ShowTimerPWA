@@ -46,7 +46,7 @@ export function decodeOsc(buffer, depth = 0) {
 }
 
 export function createOscBridge({ wsPort = 8788, udpPort = 53001, udpHost = '127.0.0.1', pairingToken = randomBytes(24).toString('base64url'),
-  origins = ['https://andyue.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:8788'] } = {}) {
+  origins = ['https://andyue.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:8788', 'http://127.0.0.1:8789'] } = {}) {
   const root = resolve('dist')
   const http = createServer(async (req, res) => {
     if (req.url === '/health') { res.writeHead(200); res.end('ShowTimer OSC bridge'); return }
@@ -95,7 +95,7 @@ export function createOscBridge({ wsPort = 8788, udpPort = 53001, udpHost = '127
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const bridge = createOscBridge({ wsPort: Number(process.env.OSC_WS_PORT || 8788), udpPort: Number(process.env.OSC_PORT || 53001),
     udpHost: process.env.OSC_HOST || '127.0.0.1', pairingToken: process.env.OSC_TOKEN,
-    origins: (process.env.ALLOWED_ORIGINS || 'https://andyue.github.io,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:8788').split(',') })
+    origins: (process.env.ALLOWED_ORIGINS || 'https://andyue.github.io,http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:8788,http://127.0.0.1:8789').split(',') })
   console.log('QLab OSC destination:', process.env.OSC_HOST || '127.0.0.1', process.env.OSC_PORT || 53001)
   console.log('Bridge URL: ws://127.0.0.1:' + (process.env.OSC_WS_PORT || 8788))
   console.log('Pairing token (paste into ShowTimer Tools):', bridge.pairingToken)

@@ -1050,3 +1050,7 @@ button:disabled {
 .viewer-connected { color: #9fe5b4; }
 .viewer-warning { color: #ffd086; }
 .viewer-controls { display: flex; gap: 12px; margin-top: 24px; }
+.connection-panel select, .share-link { width: 100%; min-width: 0; padding: 12px; background: #111; color: #eee; border: 1px solid #555; border-radius: 8px; }
+.connection-panel select { min-height: 48px; }
+.share-link { font-size: 0.8rem; }
+.lan-help p { margin-top: 10px; line-height: 1.5; }

@@ -60,3 +60,14 @@ test('broadcast compensates for clocks and interpolates only the active clock', 
   const paused = makeSnapshot(project, pauseRun(run(), 6000), 9000, 2000)
   assert.deepEqual(projectSnapshot(paused, 13000), { elapsedMs: 5000, pausedMs: 5000, currentPauseMs: 5000 })
 })
+
+test('unencrypted LAN sockets are limited to the matching HTTP private-network origin', async () => {
+  const { validateSocketUrl } = await import('../src/services/Broadcast.ts')
+  assert.equal(validateSocketUrl('ws://192.168.1.10:8789', false, 'http://192.168.1.10:8789/'), 'ws://192.168.1.10:8789/')
+  assert.throws(() => validateSocketUrl('ws://192.168.1.10:8789', false, 'https://andyue.github.io/ShowTimerPWA/'))
+  assert.throws(() => validateSocketUrl('ws://192.168.1.10:8789', false, 'http://192.168.1.11:8789/'))
+  assert.throws(() => validateSocketUrl('ws://192.168.1.10:8788', false, 'http://192.168.1.10:8789/'))
+  assert.throws(() => validateSocketUrl('ws://8.8.8.8:8789', false, 'http://8.8.8.8:8789/'))
+  assert.throws(() => validateSocketUrl('ws://192.168.1.10:8789', true, 'http://192.168.1.10:8789/'))
+  assert.equal(validateSocketUrl('wss://sync.example.com'), 'wss://sync.example.com/')
+})

@@ -3,10 +3,31 @@ import QRCode from 'qrcode'
 import { useConnections } from '../stores/ConnectionsContext'
 import { viewerUrl } from '../services/Broadcast'
 
+interface LanConfig {
+  mode: 'lan'
+  key: string
+  serviceUrl: string
+  viewerBases: { name: string; address: string; url: string }[]
+}
+
 export default function ConnectionsPanel() {
   const { room, broadcastStatus, startBroadcast, stopBroadcast, oscStatus, connectOsc, disconnectOsc } = useConnections()
   const [url, setUrl] = useState(() => localStorage.getItem('showtimer-service') || import.meta.env.VITE_SYNC_URL || '')
   const [key, setKey] = useState('')
+  const [lan, setLan] = useState<LanConfig | null>(null)
+  const [viewerBase, setViewerBase] = useState('')
+  useEffect(() => {
+    if (location.protocol !== 'http:' || !['localhost', '127.0.0.1'].includes(location.hostname)) return
+    const controller = new AbortController()
+    fetch('/lan-config.json', { signal: controller.signal, cache: 'no-store' }).then(async response => {
+      if (!response.ok) return
+      const config = await response.json() as LanConfig
+      if (config.mode === 'lan' && Array.isArray(config.viewerBases)) {
+        setLan(config); setViewerBase(config.viewerBases[0]?.url || '')
+      }
+    }).catch(() => {})
+    return () => controller.abort()
+  }, [])
   const [oscUrl, setOscUrl] = useState('ws://127.0.0.1:8788')
   const [token, setToken] = useState('')
   const [qr, setQr] = useState('')
@@ -19,8 +40,21 @@ export default function ConnectionsPanel() {
   }, [link])
   return <>
     <section className="tool-section connection-panel">
-      <h2>計時畫面廣播</h2>
+      <h2>{lan ? '區網廣播' : '計時畫面廣播'}</h2>
       <p role="status">{broadcastStatus}</p>
+      {lan ? <>
+        <p>讓手機連同一個 Wi-Fi，開啟廣播後掃碼觀看。</p>
+        {lan.viewerBases.length > 0 ? <label className="field"><span>手機使用的區網位址</span>
+          <select value={room?.viewerBaseUrl || viewerBase} disabled={!!room} onChange={e => setViewerBase(e.target.value)}>
+            {lan.viewerBases.map(a => <option key={a.url} value={a.url}>{a.address}（{a.name}）</option>)}
+          </select>
+        </label> : <p role="alert">尚未找到區網位址。請連接 Wi-Fi 或網路線，再重新啟動區網服務。</p>}
+        <div className="button-row">
+          <button disabled={!viewerBase || !!room || broadcastStatus === '連線中…'} onClick={() => startBroadcast(lan.serviceUrl, lan.key, viewerBase)}>開啟區網廣播</button>
+          <button onClick={stopBroadcast}>停止廣播</button>
+        </div>
+        <p className="section-note">請保持主控與啟動視窗開啟。更換 Wi-Fi／IP 後，重新啟動並分享新的 QR Code。多個位址時，選擇與手機同一個網路的位址。</p>
+      </> : <>
       <label className="field"><span>同步服務位址</span><input placeholder="wss://your-service.example.com" value={url} onChange={e => setUrl(e.target.value)} /></label>
       <label className="field"><span>建立房間金鑰</span><input type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} /></label>
       <p className="section-note">需先部署同步服務。未設定時，本機計時仍可正常使用。</p>
@@ -28,8 +62,13 @@ export default function ConnectionsPanel() {
         <button disabled={!url || !!room || broadcastStatus === '連線中…'} onClick={() => { localStorage.setItem('showtimer-service', url); startBroadcast(url, key) }}>開啟廣播</button>
         <button onClick={stopBroadcast}>停止廣播</button>
       </div>
+      <details className="lan-help"><summary>只想在同一個 Wi-Fi 廣播？</summary>
+        <p>在現場電腦啟動「Start-LAN-Windows.cmd」或執行 npm run lan，再開啟終端機顯示的本機網址。網頁與廣播都由該電腦提供，不需固定 IP 或雲端服務。</p>
+      </details>
+      </>}
       {link && <div className="broadcast-share">
         {qr && <img width="240" height="240" src={qr} alt="觀看廣播 QR Code" />}
+        <input className="share-link" aria-label="觀看連結" readOnly value={link} onFocus={e => e.target.select()} />
         <a href={link} target="_blank" rel="noreferrer">開啟唯讀觀看畫面</a>
         <button onClick={async () => { try { await navigator.clipboard.writeText(link); setCopyStatus('已複製') } catch { setCopyStatus('請長按上方連結複製') } }}>複製觀看連結</button>
         <span role="status">{copyStatus}</span>

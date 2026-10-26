@@ -90,8 +90,9 @@ export default function ViewerPage() {
     {snapshot?.status === 'idle' && <p>準備開始</p>}
     {snapshot && <p>累計暫停 {formatTimerSeconds((times?.pausedMs ?? 0) / 1000)}</p>}
     {snapshot?.nextSegmentName && snapshot.status !== 'finished' && <p>下一段：{snapshot.nextSegmentName}</p>}
-    <div className="viewer-controls"><button onClick={() => { setAwake(!awake); setWakeStatus('') }}>{awake ? '允許螢幕休眠' : '保持螢幕亮起'}</button>
+    <div className="viewer-controls"><button disabled={!window.isSecureContext} onClick={() => { setAwake(!awake); setWakeStatus('') }}>{awake ? '允許螢幕休眠' : '保持螢幕亮起'}</button>
       <button onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen?.().catch(() => {}) }}>全螢幕</button></div>
+    {!window.isSecureContext && <p className="section-note">區網觀看模式：請在裝置設定中關閉自動鎖定，並保持此頁在前景。</p>}
     <small>{wakeStatus}</small>
   </main>
 }

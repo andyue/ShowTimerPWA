@@ -29,3 +29,5 @@ dist-ssr
 test-results/
 playwright-report/
 server/data/
+
+dist-lan/

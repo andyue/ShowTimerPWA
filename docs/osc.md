@@ -1,5 +1,7 @@
 # QLab OSC Control
 
+區網廣播主控（`http://127.0.0.1:8789`）也可搭配此橋接；操作方式相同。
+
 ## 啟動
 
 QLab 與 ShowTimer 主控放在同一台 Mac。安裝 Node.js 24，在專案目錄執行：

@@ -12,7 +12,9 @@
     "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
     "test:e2e": "playwright test",
     "sync:server": "node server/sync.mjs",
-    "osc:bridge": "node server/osc.mjs"
+    "osc:bridge": "node server/osc.mjs",
+    "build:lan": "tsc -b && vite build --base=/ --outDir=dist-lan",
+    "lan": "npm run build:lan && node server/lan.mjs"
   },
   "dependencies": {
     "qrcode": "^1.5.4",

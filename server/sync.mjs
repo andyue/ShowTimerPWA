@@ -19,7 +19,7 @@ export function validSnapshot(s) {
     ['act', 'intermission'].includes(s.segment.type) && Number.isFinite(s.segment.plannedSeconds) && s.segment.plannedSeconds >= 0)
 }
 
-export function createSyncServer({ port = 8787, host = '127.0.0.1', origins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://andyue.github.io'], createKey = '', dataFile = '', ttlMs = 24 * 3600_000 } = {}) {
+export function createSyncServer({ port = 8787, host = '127.0.0.1', origins = ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://andyue.github.io'], createKey = '', handleRequest, allowRequest = () => true, dataFile = '', ttlMs = 24 * 3600_000 } = {}) {
   const rooms = new Map()
   if (dataFile && existsSync(dataFile)) {
     for (const [id, saved] of JSON.parse(readFileSync(dataFile, 'utf8'))) {
@@ -36,11 +36,11 @@ export function createSyncServer({ port = 8787, host = '127.0.0.1', origins = ['
     writeFileSync(dataFile + '.tmp', JSON.stringify(saved), { mode: 0o600 })
     renameSync(dataFile + '.tmp', dataFile)
   }
-  const http = createServer((req, res) => {
+  const http = createServer(handleRequest ?? ((req, res) => {
     res.writeHead(req.url === '/health' ? 200 : 404, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({ service: 'ShowTimer sync', ok: req.url === '/health' }))
-  })
-  const wss = new WebSocketServer({ server: http, maxPayload: 16384, verifyClient: ({ origin }) => origins.includes(origin) })
+  }))
+  const wss = new WebSocketServer({ server: http, maxPayload: 16384, verifyClient: ({ origin, req }) => origins.includes(origin) && allowRequest(req) })
   function broadcast(room) {
     const message = { type: 'snapshot', snapshot: room.snapshot, serverNow: Date.now(), hostOnline: !!room.host,
       updatedAt: room.updatedAt, revision: room.revision }

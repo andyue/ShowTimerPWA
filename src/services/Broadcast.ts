@@ -12,7 +12,7 @@ export interface BroadcastSnapshot {
   currentPauseMs: number
   capturedAtMs: number
 }
-export interface BroadcastRoom { url: string; id: string; hostToken: string; viewerToken: string }
+export interface BroadcastRoom { url: string; id: string; hostToken: string; viewerToken: string; viewerBaseUrl?: string }
 
 export function makeSnapshot(project: ShowProject, run: TimerRunState, nowMs: number, offset = 0): BroadcastSnapshot {
   const active = run.status === 'running' || run.status === 'paused'
@@ -37,18 +37,28 @@ export function projectSnapshot(snapshot: BroadcastSnapshot, serverNow: number) 
   }
 }
 
-export function validateSocketUrl(raw: string, localOnly = false) {
+export function isPrivateIPv4(host: string) {
+  const parts = host.split('.').map(Number)
+  return parts.length === 4 && parts.every(n => Number.isInteger(n) && n >= 0 && n <= 255) &&
+    (parts[0] === 10 || (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || (parts[0] === 192 && parts[1] === 168))
+}
+
+export function validateSocketUrl(raw: string, localOnly = false, pageUrl = typeof location === 'undefined' ? 'https://example.invalid/' : location.href) {
   const url = new URL(raw)
+  const page = new URL(pageUrl)
+  const sameLanOrigin = page.protocol === 'http:' && page.host === url.host && isPrivateIPv4(url.hostname)
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
   if (url.username || url.password || url.hash || !['wss:', 'ws:'].includes(url.protocol) ||
-    (url.protocol === 'ws:' && !local) || (localOnly && !local)) {
-    throw new Error(localOnly ? 'OSC 橋接需使用本機 ws://127.0.0.1:8788 或本機 WSS 位址' : '雲端同步位址需使用 wss://；本機測試可用 ws://localhost')
+    (url.protocol === 'ws:' && !local && !sameLanOrigin) || (localOnly && !local)) {
+    throw new Error(localOnly ? 'OSC 橋接需使用本機 ws://127.0.0.1:8788 或本機 WSS 位址' : '雲端同步需使用 wss://；區網觀看請掃描現場主控的 QR Code')
   }
   return url.toString()
 }
 
 export function viewerUrl(room: BroadcastRoom) {
-  const url = new URL(location.href)
-  url.hash = new URLSearchParams({ watch: room.id, token: room.viewerToken, service: room.url }).toString()
+  const url = new URL(room.viewerBaseUrl || location.href)
+  const service = room.viewerBaseUrl ? new URL(room.viewerBaseUrl) : new URL(room.url)
+  if (room.viewerBaseUrl) service.protocol = service.protocol === 'https:' ? 'wss:' : 'ws:'
+  url.hash = new URLSearchParams({ watch: room.id, token: room.viewerToken, service: service.toString() }).toString()
   return url.toString()
 }
