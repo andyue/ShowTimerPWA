@@ -1,3 +1,4 @@
+import { SubTimerControl, SubTimerHistory } from '../components/SubTimer'
 import GuardedAction from '../components/GuardedAction'
 import PauseHistory from '../components/PauseHistory'
 import {
@@ -81,6 +82,7 @@ export default function TimerPage() {
         </h1>
       </header>
 
+      <div className="timer-clock-row">
       <div
         className={
           currentSegment?.type ===
@@ -92,12 +94,15 @@ export default function TimerPage() {
       >
         {formatTimerSeconds(displaySeconds)}
       </div>
+      <SubTimerControl />
+      </div>
 
       {timerRun.status === 'paused' && <div className="pause-banner" role="status">
         <strong>演出暫停中</strong>
         <span>本次暫停 {formatTimerSeconds((timerRun.nowMs - timerRun.pauses.at(-1)!.startedAtMs) / 1000)}</span>
       </div>}
       <div className="page-content">
+        <SubTimerHistory />
         {(timerRun.status === 'running' || timerRun.status === 'paused') &&
           currentSegment && (
             <section

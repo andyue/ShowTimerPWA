@@ -21,7 +21,7 @@ npm run dev
 
 ## 最新更新
 
-[2026-10-30 Release notes：Qmark 排序、Note 自動列高與演出防誤按](CHANGELOG.md)
+[2026-10-30 Release notes：Sub timer 技術執行計時、Qmark 排序與演出防誤按](CHANGELOG.md)
 
 ## 既有功能
 

@@ -261,3 +261,32 @@ for (const mobile of [false, true]) {
     await page.screenshot({ path: `/tmp/qmark-compact-${mobile ? 'mobile' : 'desktop'}.png` })
   })
 }
+
+for (const mobile of [false, true]) {
+  test(`Sub timer records independently and restores across reload (${mobile ? 'mobile' : 'desktop'})`, async ({ page }) => {
+    if (mobile) await page.setViewportSize({ width: 390, height: 844 })
+    await seed(page)
+    const layout = page.locator(mobile ? '.mobile-layout' : '.desktop-layout')
+    const sub = layout.getByRole('region', { name: 'Sub timer', exact: true })
+    await sub.getByRole('button', { name: 'Start', exact: true }).click()
+    await expect(sub.locator('output')).toHaveText('00:01')
+    await expect(layout.locator('.timer-display')).toHaveText('00:00:00')
+    await page.reload()
+    await expect(sub.getByRole('button', { name: 'Stop', exact: true })).toBeVisible()
+    await sub.getByRole('button', { name: 'Stop', exact: true }).click()
+    await layout.getByText('技術執行紀錄（1 次）').click()
+    await layout.getByLabel('技術執行備註（選填，可事後補）').fill('換景測試')
+    await sub.getByRole('button', { name: 'Reset', exact: true }).click()
+    await expect(sub.locator('output')).toHaveText('00:00')
+    await expect(layout.getByLabel('技術執行備註（選填，可事後補）')).toHaveValue('換景測試')
+    await sub.getByRole('button', { name: 'Start', exact: true }).click()
+    await sub.getByRole('button', { name: 'Reset', exact: true }).click()
+    await expect(layout.getByText('技術執行紀錄（2 次）')).toBeVisible()
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('showtimer-current-project')!))
+    expect(saved.subTimer.records).toHaveLength(2)
+    expect(saved.subTimer.records.every((record: { endedAtMs: number | null }) => record.endedAtMs !== null)).toBe(true)
+    expect(saved.cueMarks).toHaveLength(0)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await page.screenshot({ path: `/tmp/sub-timer-${mobile ? 'mobile' : 'desktop'}.png` })
+  })
+}

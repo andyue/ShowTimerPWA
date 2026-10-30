@@ -1,3 +1,4 @@
+import type { SubTimerState } from '../services/SubTimer'
 import type { CueMark } from './CueMark'
 import type { SegmentResult } from './SegmentResult'
 import type { ShowSegment } from './ShowSegment'
@@ -18,6 +19,7 @@ export interface ShowProject {
   segments: ShowSegment[]
   results: SegmentResult[]
   cueMarks: CueMark[]
+  subTimer?: SubTimerState
 }
 
 export function createShowProject(

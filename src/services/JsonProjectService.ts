@@ -1,3 +1,4 @@
+import { parseSubTimer } from './SubTimer'
 import { parsePauseRecords } from './PauseValidation'
 import type { SegmentResult } from '../models/SegmentResult'
 import {
@@ -162,6 +163,7 @@ export function validateShowProject(
         return { ...result, ...(result.pauses === undefined ? {} : { pauses: parsePauseRecords(JSON.stringify(result.pauses)) }) } as unknown as SegmentResult
       }),
     cueMarks,
+    subTimer: parseSubTimer(value.subTimer),
   }
 }
 

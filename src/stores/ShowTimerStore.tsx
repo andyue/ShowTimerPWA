@@ -1,3 +1,4 @@
+import { toggleSubTimer, resetSubTimer } from '../services/SubTimer'
 import { insertCueMark, moveCueMark as reorderCueMark } from '../services/CueMarkOrder'
 import { isValidTimerRun } from '../services/RunValidation'
 import {
@@ -604,6 +605,19 @@ export function ShowTimerProvider({
     startShow,
     nextSegment,
     resetRun,
+    toggleSubTimer: () => {
+      const now = Date.now()
+      const segmentName = project.segments[Math.max(0, timerRun.currentSegmentIndex)]?.name ?? ''
+      updateProject(current => ({ ...current, subTimer: toggleSubTimer(current.subTimer, now, segmentName) }))
+    },
+    resetSubTimer: () => {
+      const now = Date.now()
+      updateProject(current => ({ ...current, subTimer: resetSubTimer(current.subTimer, now) }))
+    },
+    updateSubTimerNote: (id, note) => updateProject(current => ({
+      ...current,
+      subTimer: current.subTimer ? { ...current.subTimer, records: current.subTimer.records.map(record => record.id === id ? { ...record, note } : record) } : undefined,
+    })),
     addCueMark,
     moveCueMark,
     updateCueMarkNote,

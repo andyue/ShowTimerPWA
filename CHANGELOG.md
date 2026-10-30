@@ -1,5 +1,12 @@
 # Release notes
 
+## 2026-10-30 — Sub timer 技術執行計時
+
+- 主時間右側新增獨立 Sub timer，Start／Stop 記錄每次技術執行的起訖時間、耗時、段落及備註。
+- Reset 歸零但保留紀錄；計時中 Reset 需確認並先保存本次紀錄。
+- 不影響主 Show 或 Qmark，主 Show 暫停及換段時繼續獨立計時。
+- 紀錄與進行中狀態可重新整理恢復，並隨 JSON／CSV 保存。
+
 ## 2026-10-30 — Qmark 排序與演出防誤按
 
 ### Qmark

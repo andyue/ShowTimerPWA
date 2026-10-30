@@ -1,3 +1,4 @@
+import { parseSubTimer } from './SubTimer'
 import { sortCueMarks } from './CueMarkOrder'
 import { parsePauseRecords } from './PauseValidation'
 import type { CueMark } from '../models/CueMark'
@@ -106,6 +107,18 @@ export function exportProjectToCsv(
       JSON.stringify(result.pauses ?? []),
     ]),
     [],
+    ['Sub Timer'],
+    ['Started At', 'Ended At', 'Segment', 'Elapsed Seconds', 'Note', 'State'],
+    ...(project.subTimer?.records ?? []).map(record => [
+      new Date(record.startedAtMs).toISOString(),
+      record.endedAtMs === null ? 'Running' : new Date(record.endedAtMs).toISOString(),
+      record.segmentName,
+      Math.max(0, ((record.endedAtMs ?? Date.now()) - record.startedAtMs) / 1000),
+      record.note,
+      '',
+    ]),
+    ['', '', '', '', '', JSON.stringify(project.subTimer ?? { records: [], reset: true })],
+    [],
     ['Marks'],
     [
       'Label',
@@ -155,6 +168,8 @@ export function importProjectFromCsv(
     row.map((cell) => cell.trim()),
   )
 
+  const rowsForSubTimer = rows
+
   const projectName =
     getMetadataValue(rows, 'Show File') ||
     'Untitled Show'
@@ -194,6 +209,12 @@ export function importProjectFromCsv(
     segments,
     results,
     cueMarks,
+    subTimer: (() => {
+      const rows = getSectionRows(rowsForSubTimer, 'Sub Timer')
+      const { headers, dataRows } = getHeaderAndDataRows(rows)
+      const data = dataRows.map(row => getCell(row, headers, 'State')).find(Boolean)
+      return data ? parseSubTimer(JSON.parse(data)) : undefined
+    })(),
   }
 }
 
@@ -513,7 +534,7 @@ function getSectionRows(
 
     if (
       row.length === 1 &&
-      ['Segments', 'Completed Results', 'Marks'].includes(
+      ['Segments', 'Completed Results', 'Marks', 'Sub Timer'].includes(
         row[0],
       )
     ) {
