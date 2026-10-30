@@ -1,3 +1,4 @@
+import GuardedAction from '../components/GuardedAction'
 import PauseHistory from '../components/PauseHistory'
 import {
   formatClockTime,
@@ -277,15 +278,15 @@ export default function TimerPage() {
         )}
       </div>
 
-      <div className="timer-action-bar">
-        {timerRun.status === 'running' && <button className="secondary-button pause-button" onClick={pauseShow}>Pause 暫停</button>}
+      <div className="timer-action-bar" key={`${project.projectId}:${currentSegment?.id}:${timerRun.status}:${timerRun.startedAtIso}`}>
+        {timerRun.status === 'running' && <GuardedAction className="secondary-button pause-button" onClick={pauseShow}>Pause 暫停</GuardedAction>}
         {timerRun.status === 'paused' && <>
-          <button className="primary-button" onClick={resumeShow}>Resume 繼續演出</button>
-          <button className="secondary-button" onClick={() => { if (window.confirm('結束暫停並結束本段？最後一次暫停會計入紀錄。')) nextSegment() }}>結束本段</button>
+          <GuardedAction className="primary-button" onClick={resumeShow}>Resume 繼續演出</GuardedAction>
+          <GuardedAction className="secondary-button" confirmation="結束暫停並結束本段？最後一次暫停會計入紀錄。" onClick={nextSegment}>結束本段</GuardedAction>
         </>}
         {timerRun.status === 'paused' ? null : <>
         {timerRun.status === 'running' ? (
-          <button
+          <GuardedAction
             className="primary-button"
             type="button"
             onClick={nextSegment}
@@ -297,9 +298,9 @@ export default function TimerPage() {
                     ? `: ${nextSegmentName}`
                     : ''
                 }`}
-          </button>
+          </GuardedAction>
         ) : (
-          <button
+          <GuardedAction
             className="primary-button"
             type="button"
             disabled={
@@ -310,17 +311,17 @@ export default function TimerPage() {
             {currentSegment
               ? `Start ${currentSegment.name}`
               : 'Start'}
-          </button>
+          </GuardedAction>
         )}
 
         {timerRun.status === 'finished' && (
-          <button
+          <GuardedAction
             className="secondary-button"
             type="button"
             onClick={resetRun}
           >
             Reset Run
-          </button>
+          </GuardedAction>
         )}
         </>}
       </div>

@@ -60,6 +60,7 @@ export interface ShowTimerStoreValue {
   startShow: () => void
   nextSegment: () => void
   resetRun: () => void
+  moveCueMark: (id: string, direction: 'up' | 'down') => void
   addCueMark: () => void
   updateCueMarkNote: (
     cueMarkId: string,

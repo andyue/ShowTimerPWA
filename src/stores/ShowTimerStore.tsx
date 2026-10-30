@@ -1,3 +1,4 @@
+import { insertCueMark, moveCueMark as reorderCueMark } from '../services/CueMarkOrder'
 import { isValidTimerRun } from '../services/RunValidation'
 import {
   useEffect,
@@ -525,8 +526,8 @@ export function ShowTimerProvider({
 
     updateProject((currentProject) => ({
       ...currentProject,
-      cueMarks: [
-        ...currentProject.cueMarks,
+      cueMarks: insertCueMark(
+        currentProject.cueMarks,
         {
           id: crypto.randomUUID(),
           label: `M${
@@ -542,7 +543,7 @@ export function ShowTimerProvider({
           note: '',
           createdAt: now.toISOString(),
         },
-      ],
+      ),
     }))
   }
 
@@ -561,6 +562,13 @@ export function ShowTimerProvider({
               }
             : cueMark,
       ),
+    }))
+  }
+
+  function moveCueMark(id: string, direction: 'up' | 'down') {
+    updateProject(currentProject => ({
+      ...currentProject,
+      cueMarks: reorderCueMark(currentProject.cueMarks, id, direction),
     }))
   }
 
@@ -597,6 +605,7 @@ export function ShowTimerProvider({
     nextSegment,
     resetRun,
     addCueMark,
+    moveCueMark,
     updateCueMarkNote,
     deleteCueMark,
   }

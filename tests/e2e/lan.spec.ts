@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
 
+test.beforeEach(async ({ page }) => {
+  page.on('dialog', dialog => dialog.accept())
+})
+
 test('LAN host auto-configures and a private-IP mobile viewer works without internet or secure-context APIs', async ({ page, browser }) => {
   const configResponse = await page.request.get('http://127.0.0.1:8790/lan-config.json')
   const config = await configResponse.json()
@@ -110,10 +114,15 @@ test('large Q Mark list stays readable and only new marks auto-scroll the viewer
     await expect(viewer.locator('.viewer-marks')).toBeInViewport()
     await viewer.screenshot({ path: '/tmp/showtimer-qmarks-mobile.png' })
     expect(await viewer.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await area.evaluate(node => { node.scrollTop = node.scrollHeight })
     await page.locator('.desktop-layout').getByRole('button', { name: 'Start Act 1', exact: true }).click()
     await page.locator('.desktop-layout').getByRole('button', { name: 'Add Mark', exact: true }).click()
     await expect(viewer.locator('.viewer-marks-table tbody tr')).toHaveCount(61)
-    await expect.poll(() => area.evaluate(node => node.scrollTop)).toBeGreaterThan(0)
+    const newestId = await page.evaluate(() => {
+      const marks = JSON.parse(localStorage.getItem('showtimer-current-project')!).cueMarks
+      return marks.find((mark: { id: string }) => !mark.id.startsWith('mark-')).id
+    })
+    await expect(viewer.locator(`[data-mark-id="${newestId}"]`)).toBeInViewport()
   } finally {
     await tools.getByRole('button', { name: '停止廣播', exact: true }).click()
     await context.close()

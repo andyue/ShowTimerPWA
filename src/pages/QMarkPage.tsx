@@ -1,3 +1,4 @@
+import { sortCueMarks } from '../services/CueMarkOrder'
 import {
   useEffect,
   useMemo,
@@ -18,6 +19,7 @@ export default function QMarkPage() {
     addCueMark,
     updateCueMarkNote,
     deleteCueMark,
+    moveCueMark,
   } = useShowTimerStore()
 
   const canAddCueMark =
@@ -47,37 +49,7 @@ export default function QMarkPage() {
       : 0
 
   const sortedCueMarks = useMemo(
-    () =>
-      [...project.cueMarks].sort(
-        (first, second) => {
-          const segmentOrderDifference =
-            first.segmentOrder -
-            second.segmentOrder
-
-          if (
-            segmentOrderDifference !== 0
-          ) {
-            return segmentOrderDifference
-          }
-
-          const elapsedDifference =
-            first.elapsedSeconds -
-            second.elapsedSeconds
-
-          if (elapsedDifference !== 0) {
-            return elapsedDifference
-          }
-
-          return (
-            new Date(
-              first.createdAt,
-            ).getTime() -
-            new Date(
-              second.createdAt,
-            ).getTime()
-          )
-        },
-      ),
+    () => sortCueMarks(project.cueMarks),
     [project.cueMarks],
   )
 
@@ -184,6 +156,7 @@ export default function QMarkPage() {
           <table className="qmark-table">
             <thead>
               <tr>
+                <th scope="col" className="qmark-order-cell" aria-label="調整順序" />
                 <th scope="col">M</th>
                 <th scope="col">Time</th>
                 <th scope="col">Act</th>
@@ -197,7 +170,7 @@ export default function QMarkPage() {
                 <tr>
                   <td
                     className="qmark-empty-cell"
-                    colSpan={5}
+                    colSpan={6}
                   >
                     目前還沒有 Q Mark。
                   </td>
@@ -214,6 +187,12 @@ export default function QMarkPage() {
                           : undefined
                       }
                     >
+                      <td className="qmark-order-cell">
+                        <div className="qmark-order-controls">
+                          <button type="button" aria-label={`上移 Q${index + 1}`} disabled={index === 0} onClick={() => moveCueMark(cueMark.id, 'up')}>↑</button>
+                          <button type="button" aria-label={`下移 Q${index + 1}`} disabled={index === sortedCueMarks.length - 1} onClick={() => moveCueMark(cueMark.id, 'down')}>↓</button>
+                        </div>
+                      </td>
                       <td>{index + 1}</td>
 
                       <td className="qmark-table-time">
@@ -231,6 +210,7 @@ export default function QMarkPage() {
                       <td>
                         <label
                           className="qmark-table-note"
+                          data-note={cueMark.note || `Q${index + 1}`}
                           aria-label={`${cueMark.label} note`}
                         >
                           <textarea
@@ -252,6 +232,7 @@ export default function QMarkPage() {
                       </td>
 
                       <td>
+
                         <button
                           className="danger-button qmark-delete-button"
                           type="button"

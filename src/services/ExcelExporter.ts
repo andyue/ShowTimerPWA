@@ -1,3 +1,4 @@
+import { sortCueMarks } from './CueMarkOrder'
 import { parsePauseRecords } from './PauseValidation'
 import type { CueMark } from '../models/CueMark'
 import {
@@ -115,6 +116,7 @@ export function exportProjectToCsv(
       'Elapsed Seconds',
       'Created At',
       'Note',
+      'Display Order',
     ],
     ...getSortedCueMarks(project).map(
       (cueMark) => [
@@ -130,6 +132,7 @@ export function exportProjectToCsv(
         cueMark.elapsedSeconds,
         cueMark.createdAt,
         cueMark.note,
+        cueMark.displayOrder ?? '',
       ],
     ),
   ]
@@ -197,30 +200,7 @@ export function importProjectFromCsv(
 function getSortedCueMarks(
   project: ShowProject,
 ) {
-  return [...project.cueMarks].sort(
-    (first, second) => {
-      const segmentOrderDifference =
-        first.segmentOrder -
-        second.segmentOrder
-
-      if (segmentOrderDifference !== 0) {
-        return segmentOrderDifference
-      }
-
-      const elapsedDifference =
-        first.elapsedSeconds -
-        second.elapsedSeconds
-
-      if (elapsedDifference !== 0) {
-        return elapsedDifference
-      }
-
-      return (
-        new Date(first.createdAt).getTime() -
-        new Date(second.createdAt).getTime()
-      )
-    },
-  )
+  return sortCueMarks(project.cueMarks)
 }
 
 function parseSegments(
@@ -426,6 +406,7 @@ function parseCueMarks(
           ) ?? segment.type,
         elapsedSeconds,
         note: getCell(row, headers, 'Note'),
+        displayOrder: parseNonNegativeInteger(getCell(row, headers, 'Display Order')) ?? undefined,
         createdAt:
           getCell(
             row,

@@ -7,8 +7,19 @@ import { join } from 'node:path'
 import { WebSocket } from 'ws'
 import { createLanServer, lanAddresses } from '../server/lan.mjs'
 
-function message(ws) {
-  return Promise.race([once(ws, 'message').then(([raw]) => JSON.parse(raw.toString())), new Promise((_, reject) => { const id = setTimeout(() => reject(new Error('Message timeout')), 2000); id.unref() })])
+function message(ws, expectedType) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => { clearTimeout(timeout); ws.off('message', receive) }
+    const receive = raw => {
+      const value = JSON.parse(raw.toString())
+      if (expectedType && value.type !== expectedType) return
+      cleanup()
+      resolve(value)
+    }
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('Message timeout')) }, 2000)
+    timeout.unref()
+    ws.on('message', receive)
+  })
 }
 
 test('LAN discovery excludes loopback/public addresses and deduplicates interface addresses', () => {
@@ -50,6 +61,6 @@ test('LAN server serves built assets, protects bootstrap key, and enforces host/
     result = message(host); host.send(JSON.stringify({ type: 'create', key: config.key })); const room = await result
     const viewer = new WebSocket(config.serviceUrl, { origin: `http://192.168.1.10:${port}` }); await once(viewer, 'open')
     result = message(viewer); viewer.send(JSON.stringify({ type: 'join', id: room.id, token: room.viewerToken })); assert.equal((await result).role, 'viewer')
-    result = message(viewer); viewer.send(JSON.stringify({ type: 'publish', snapshot: {} })); assert.equal((await result).type, 'error')
+    result = message(viewer, 'error'); viewer.send(JSON.stringify({ type: 'publish', snapshot: {} })); assert.equal((await result).type, 'error')
   } finally { await service.close(); await rm(root, { recursive: true, force: true }) }
 })

@@ -242,6 +242,7 @@ function validateCueMark(
   }
 
   return {
+    ...(Number.isInteger(value.displayOrder) && Number(value.displayOrder) >= 0 ? { displayOrder: Number(value.displayOrder) } : {}),
     id: value.id,
     label: value.label,
     segmentId: value.segmentId,
