@@ -1,3 +1,4 @@
+import { SubTimerControl } from '../components/SubTimer'
 import { sortCueMarks } from '../services/CueMarkOrder'
 import {
   useEffect,
@@ -110,6 +111,7 @@ export default function QMarkPage() {
   return (
     <section className="page qmark-page">
       <div className="page-content qmark-page-content">
+        <div className="qmark-mobile-clock-row">
         {currentSegment ? (
           <section
             className={
@@ -151,6 +153,9 @@ export default function QMarkPage() {
             </div>
           </section>
         )}
+
+        <SubTimerControl />
+        </div>
 
         <div className="qmark-table-frame">
           <table className="qmark-table">

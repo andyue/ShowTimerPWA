@@ -21,7 +21,7 @@ npm run dev
 
 ## 最新更新
 
-[2026-10-30 Release notes：Sub timer 技術執行計時、Qmark 排序與演出防誤按](CHANGELOG.md)
+[2026-10-31 Release notes：手機共用 Sub timer 與自動 Qmark 紀錄](CHANGELOG.md)
 
 ## 既有功能
 

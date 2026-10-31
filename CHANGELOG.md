@@ -1,5 +1,11 @@
 # Release notes
 
+## 2026-10-31 — 共用 Sub timer 與 Qmark
+
+- 手機 Timer／Qmark 分頁顯示同一個 Sub timer，切換分頁不會重新計時。
+- Stop 或計時中 Reset 保存技術紀錄時，同時新增一筆 Qmark；時間戳為停止當下的段落淨演出時間，Note 記錄 Sub timer 時長。
+- 主計時尚未開始時時間戳為 00:00:00；暫停中使用凍結的主時間。已停止後 Reset 不會重複新增。
+
 ## 2026-10-30 — Sub timer 技術執行計時
 
 - 主時間右側新增獨立 Sub timer，Start／Stop 記錄每次技術執行的起訖時間、耗時、段落及備註。

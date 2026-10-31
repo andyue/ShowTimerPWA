@@ -1211,3 +1211,22 @@ button:disabled {
   .sub-timer { flex-basis: 92px; padding: 6px; }
   .timer-clock-row .timer-display { font-size: clamp(1.5rem, calc((100cqw - 104px) / 4.9), 6.8rem); }
 }
+
+.qmark-mobile-clock-row { display: none; }
+@media (max-width: 900px) {
+  .qmark-mobile-clock-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .qmark-mobile-clock-row .qmark-mobile-timer-panel {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px;
+  }
+  .qmark-mobile-clock-row .qmark-live-time { font-size: clamp(1.5rem, 8vw, 3rem); }
+}

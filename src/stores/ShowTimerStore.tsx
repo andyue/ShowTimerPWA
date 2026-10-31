@@ -38,6 +38,7 @@ import {
 
 import {
   createSegmentResult,
+  formatTimerSeconds,
   getRunElapsedSeconds,
   getPausedMs,
   pauseRun,
@@ -548,6 +549,44 @@ export function ShowTimerProvider({
     }))
   }
 
+  function changeSubTimer(reset: boolean) {
+    const now = Date.now()
+    updateProject(current => {
+      const previous = current.subTimer?.records.at(-1)
+      const segmentIndex = timerRun.status === 'finished'
+        ? current.segments.length - 1
+        : Math.max(0, timerRun.currentSegmentIndex)
+      const segment = current.segments[segmentIndex]
+      const subTimer = reset
+        ? resetSubTimer(current.subTimer, now)
+        : toggleSubTimer(current.subTimer, now, segment?.name ?? '')
+      const completed = subTimer.records.at(-1)
+      // Save the interval and its cue in one update; resetting a stopped timer adds nothing.
+      if (!previous || previous.endedAtMs !== null || !completed || completed.endedAtMs === null) {
+        return { ...current, subTimer }
+      }
+      const active = timerRun.status === 'running' || timerRun.status === 'paused'
+      const finalResult = timerRun.status === 'finished' ? current.results.at(-1) : undefined
+      const elapsedSeconds = active ? getRunElapsedSeconds(timerRun, now) : finalResult?.elapsedSeconds ?? 0
+      const duration = (completed.endedAtMs - completed.startedAtMs) / 1000
+      return {
+        ...current,
+        subTimer,
+        cueMarks: insertCueMark(current.cueMarks, {
+          id: crypto.randomUUID(),
+          label: `M${getNextCueMarkNumber(current.cueMarks)}`,
+          segmentId: segment?.id ?? '',
+          segmentOrder: segment?.order ?? 0,
+          segmentName: segment?.name ?? '未指定段落',
+          segmentType: segment?.type ?? 'act',
+          elapsedSeconds,
+          note: `Sub timer 時長 ${formatTimerSeconds(duration)}`,
+          createdAt: new Date(now).toISOString(),
+        }),
+      }
+    })
+  }
+
   function updateCueMarkNote(
     cueMarkId: string,
     note: string,
@@ -605,15 +644,8 @@ export function ShowTimerProvider({
     startShow,
     nextSegment,
     resetRun,
-    toggleSubTimer: () => {
-      const now = Date.now()
-      const segmentName = project.segments[Math.max(0, timerRun.currentSegmentIndex)]?.name ?? ''
-      updateProject(current => ({ ...current, subTimer: toggleSubTimer(current.subTimer, now, segmentName) }))
-    },
-    resetSubTimer: () => {
-      const now = Date.now()
-      updateProject(current => ({ ...current, subTimer: resetSubTimer(current.subTimer, now) }))
-    },
+    toggleSubTimer: () => changeSubTimer(false),
+    resetSubTimer: () => changeSubTimer(true),
     updateSubTimerNote: (id, note) => updateProject(current => ({
       ...current,
       subTimer: current.subTimer ? { ...current.subTimer, records: current.subTimer.records.map(record => record.id === id ? { ...record, note } : record) } : undefined,
