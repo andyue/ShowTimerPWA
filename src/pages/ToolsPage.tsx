@@ -292,6 +292,8 @@ export default function ToolsPage() {
           )}
         </section>
 
+        <CueTagManager />
+
         <section className="tool-section">
           <h2>Show File Control</h2>
 
@@ -389,7 +391,6 @@ export default function ToolsPage() {
             Reset Show File
           </button>
         </section>
-        <CueTagManager />
         <ConnectionsPanel />
         <section className="tool-section resource-links">
           <h2>下載與使用說明</h2>

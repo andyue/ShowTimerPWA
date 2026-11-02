@@ -1,7 +1,9 @@
+import MarkTimeEditor from '../components/MarkTimeEditor'
+import FitTime from '../components/FitTime'
 import { useTagFilter } from '../services/useTagFilter'
 import WallClock from '../components/WallClock'
-import { TagChoices, TagBadges, NewMarkTags } from '../components/CueTags'
-import { matchesTags } from '../services/CueTags'
+import { TagChoices, TagDropdown } from '../components/CueTags'
+import { matchesTags, cueRowBackground } from '../services/CueTags'
 import { SubTimerControl } from '../components/SubTimer'
 import { sortCueMarks } from '../services/CueMarkOrder'
 import {
@@ -26,6 +28,8 @@ export default function QMarkPage() {
     deleteCueMark,
     moveCueMark,
     setCueMarkTags,
+    updateCueMarkTime,
+    setSelectedTagIds,
   } = useShowTimerStore()
 
   const [filter, setFilter] = useTagFilter(`qmarks:${project.projectId}`)
@@ -120,6 +124,9 @@ export default function QMarkPage() {
   return (
     <section className="page qmark-page">
       <div className="page-content qmark-page-content">
+        <div className="mark-filter qmark-top-filter" aria-label="Q Mark 篩選" title="選取的顏色也會套用到新 Q Mark；全部或未分類時新增無顏色 Q Mark">
+          <span>顯示標籤</span><TagChoices tags={tags} selected={effectiveFilter} onChange={ids => { setFilter(ids); setSelectedTagIds(ids.filter(id => id !== 'untagged')) }} filter />
+        </div>
         <div className="qmark-mobile-clock-row">
         {currentSegment ? (
           <section
@@ -140,7 +147,7 @@ export default function QMarkPage() {
 
             <WallClock />
             <div className="qmark-live-time">
-              {formatTimerSeconds(displaySeconds)}
+              <FitTime>{formatTimerSeconds(displaySeconds)}</FitTime>
             </div>
 
             {currentSegment.type ===
@@ -160,7 +167,7 @@ export default function QMarkPage() {
 
             <WallClock />
             <div className="qmark-live-time muted-time">
-              00:00:00
+              <FitTime>00:00:00</FitTime>
             </div>
           </section>
         )}
@@ -168,8 +175,6 @@ export default function QMarkPage() {
         <SubTimerControl />
         </div>
 
-        <NewMarkTags />
-        <div className="mark-filter" aria-label="Q Mark 篩選"><span>顯示標籤</span><TagChoices tags={tags} selected={effectiveFilter} onChange={setFilter} filter /></div>
         <div className="qmark-table-frame">
           <table className="qmark-table">
             <thead>
@@ -179,7 +184,8 @@ export default function QMarkPage() {
                 <th scope="col">Time</th>
                 <th scope="col">Act</th>
                 <th scope="col">Note</th>
-                <th scope="col">Delete</th>
+                <th scope="col" aria-label="顏色">色</th>
+                <th scope="col" aria-label="刪除">×</th>
               </tr>
             </thead>
 
@@ -188,7 +194,7 @@ export default function QMarkPage() {
                 <tr>
                   <td
                     className="qmark-empty-cell"
-                    colSpan={6}
+                    colSpan={7}
                   >
                     沒有符合條件的 Q Mark。
                   </td>
@@ -198,6 +204,7 @@ export default function QMarkPage() {
                   (cueMark, index) => matchesTags(cueMark, effectiveFilter, tags) && (
                     <tr
                       key={cueMark.id}
+                      style={{ backgroundImage: cueRowBackground(cueMark, tags) }}
                       ref={
                         cueMark.id ===
                         newestCueMarkId
@@ -214,9 +221,7 @@ export default function QMarkPage() {
                       <td>{index + 1}</td>
 
                       <td className="qmark-table-time">
-                        {formatTimerSeconds(
-                          cueMark.elapsedSeconds,
-                        )}
+                        <MarkTimeEditor seconds={cueMark.elapsedSeconds} number={index + 1} onChange={seconds => updateCueMarkTime(cueMark.id, seconds)} />
                       </td>
 
                       <td className="qmark-table-act">
@@ -226,8 +231,6 @@ export default function QMarkPage() {
                       </td>
 
                       <td>
-                        <TagBadges tags={tags} mark={cueMark} />
-                        {tags.length > 0 && <details className="mark-tag-editor"><summary aria-label={`Q${index + 1} 標籤`}>標籤</summary><TagChoices tags={tags} selected={cueMark.tagIds ?? []} onChange={ids => setCueMarkTags(cueMark.id, ids)} /></details>}
                         <label
                           className="qmark-table-note"
                           data-note={cueMark.note || `Q${index + 1}`}
@@ -251,10 +254,13 @@ export default function QMarkPage() {
                         </label>
                       </td>
 
-                      <td>
-
+                      <td className="qmark-color-cell">
+                        <TagDropdown tags={tags} mark={cueMark} number={index + 1} onChange={ids => setCueMarkTags(cueMark.id, ids)} />
+                      </td>
+                      <td className="qmark-delete-cell">
                         <button
                           className="danger-button qmark-delete-button"
+                          aria-label="Delete" title={`刪除 Q${index + 1}`}
                           type="button"
                           onClick={() =>
                             deleteCueMark(
@@ -262,7 +268,7 @@ export default function QMarkPage() {
                             )
                           }
                         >
-                          Delete
+                          ×
                         </button>
                       </td>
                     </tr>
@@ -278,7 +284,7 @@ export default function QMarkPage() {
         className="primary-button qmark-mark-button"
         type="button"
         disabled={!canAddCueMark}
-        onClick={addCueMark}
+        onClick={() => addCueMark(effectiveFilter.filter(id => id !== 'untagged'))}
       >
         Add Mark
       </button>

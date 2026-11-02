@@ -1,3 +1,4 @@
+import { parseMarkTime } from '../src/services/MarkTime.ts'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createShowProject } from '../src/models/ShowProject.ts'
@@ -23,10 +24,17 @@ test('multi-tags survive JSON, CSV and broadcast, with legacy support', () => {
   assert.equal(matchesTags(project.cueMarks[0], ['untagged'], project.cueTags), false)
   assert.equal(matchesTags({ ...project.cueMarks[0], tagIds: [] }, ['untagged'], project.cueTags), true)
   delete project.cueTags; delete project.cueMarks[0].tagIds
-  assert.deepEqual(validateShowProject(project).cueTags, [])
+  assert.equal(validateShowProject(project).cueTags?.length, 4)
 })
 test('invalid imported tag definitions and assignments are rejected', () => {
   assert.throws(() => parseCueTags([{ id: 'x', name: 'bad', color: 'url(evil)' }]))
   assert.throws(() => parseTagIds([{}]))
   assert.throws(() => parseCueTags([{ id: 'x', name: '', color: '#ffffff' }]))
+})
+
+test('manual cue time accepts long hours and rejects malformed or negative values', () => {
+  assert.equal(parseMarkTime('00:12:34'), 754)
+  assert.equal(parseMarkTime('123:00:00'), 442800)
+  assert.equal(parseMarkTime('00:00:00'), 0)
+  for (const bad of ['-01:00:00', '00:60:00', '00:00:60', '', 'abc']) assert.equal(parseMarkTime(bad), null)
 })

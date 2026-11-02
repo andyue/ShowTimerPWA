@@ -1274,3 +1274,44 @@ button.tag-chip { min-height: 34px; cursor: pointer; }
   .sub-timer { gap: 4px; padding: 4px; }
   .sub-timer button { padding: 4px 7px; }
 }
+
+.fit-time { display: block; width: 100%; min-width: 0; contain: inline-size; line-height: 1; font-variant-numeric: tabular-nums; }
+.fit-time > span { display: inline-block; white-space: nowrap; letter-spacing: 0; line-height: 1; }
+.timer-clock-row .timer-display, .qmark-mobile-clock-row .qmark-live-time { width: 100%; line-height: 1; }
+.viewer-time { width: 100%; min-width: 0; }
+.timer-stat strong { display: block; min-width: 0; }
+.sub-timer { grid-template-columns: auto minmax(65px, 85px) auto auto; justify-content: center; gap: 8px; padding: 1px 4px; border-width: 1px; max-width: none; }
+.sub-timer-time { min-width: 0; line-height: 1; }
+.sub-timer button { min-height: 30px; padding: 2px 8px; line-height: 1; }
+.qmark-top-filter { margin-top: 0; }
+.mark-tag-editor summary { display: flex; align-items: center; flex-wrap: wrap; cursor: pointer; min-height: 26px; border: 1px solid #555; padding: 2px 4px; border-radius: 5px; }
+.tag-dropdown { display: grid; gap: 4px; padding: 6px; background: #252525; border: 1px solid #666; border-radius: 5px; }
+.tag-dropdown label { display: flex; align-items: center; gap: 5px; min-height: 30px; }
+.tag-dropdown input { width: 16px; height: 16px; margin: 0; }
+.tag-dropdown i { width: 10px; height: 10px; border-radius: 50%; background: var(--tag-color); }
+.tag-dropdown button { font-size: 0.75rem; padding: 5px; }
+.qmark-column .page > .qmark-mark-button, .mobile-page > .page > .qmark-mark-button { min-height: 68px; height: 68px; flex: 0 0 68px; font-size: 1.15rem; border-radius: 16px; margin: 8px 12px; }
+@media (max-width: 900px) {
+  .qmark-page-content { padding-top: 5px; }
+  .qmark-top-filter { display: flex; align-items: center; gap: 5px; }
+  .qmark-top-filter > span { white-space: nowrap; }
+  .qmark-top-filter .tag-choices { flex-wrap: nowrap; overflow-x: auto; min-width: 0; padding: 2px; }
+  .qmark-top-filter .tag-chip { flex-shrink: 0; }
+  .qmark-mobile-clock-row .qmark-mobile-timer-panel { margin-bottom: 0; }
+}
+
+.qmark-table th:nth-child(3), .qmark-table td:nth-child(3) { width: 23%; min-width: 74px; padding: 2px 3px; }
+.qmark-table th:nth-child(6), .qmark-table td:nth-child(6), .qmark-table th:nth-child(7), .qmark-table td:nth-child(7) { width: 30px; padding: 1px; text-align: center; }
+.qmark-table .qmark-delete-button { width: 28px; min-width: 0; height: 30px; min-height: 0; padding: 0; font-size: 1.3rem; line-height: 1; }
+.mark-tag-editor { margin: 0; }
+.tag-swatch-button { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; align-items: center; width: 28px; min-height: 28px; border: 1px solid #777; padding: 2px; background: transparent; color: #ccc; border-radius: 4px; }
+.tag-swatch-button i { width: 9px; height: 9px; }
+.tag-dropdown[popover] { position: fixed; margin: 0; width: 190px; max-height: 240px; overflow-y: auto; color: #eee; }
+.tag-dropdown[popover]:not(:popover-open) { display: none; }
+.mark-time-button { display: block; width: 100%; min-width: 0; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: text; }
+.mark-time-input { width: 100%; min-width: 0; padding: 2px 0; font-size: 0.85rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.mark-time-input[aria-invalid="true"] { outline: 2px solid #f87171; }
+.viewer-marks-table tbody tr { background-color: transparent; }
+.timer-stat strong .fit-time, .timer-stat strong .fit-time > span { color: inherit; }
+.tag-swatch-button > span { font-size: 1rem; line-height: 1; }
+.mark-time-error { display: block; color: #f87171; font-size: 0.65rem; line-height: 1.2; }

@@ -1,3 +1,4 @@
+import FitTime from '../components/FitTime'
 import WallClock from '../components/WallClock'
 import ViewerQMarks from '../components/ViewerQMarks'
 import { useEffect, useState } from 'react'
@@ -89,7 +90,7 @@ export default function ViewerPage() {
     <h1>{snapshot?.projectName || 'ShowTimer'}</h1>
     <h2>{snapshot?.status === 'finished' ? '演出已完成' : snapshot?.segment?.name || '等待廣播'}</h2>
     <WallClock />
-    <div className="viewer-time">{formatTimerSeconds(display)}</div>
+    <div className="viewer-time"><FitTime>{formatTimerSeconds(display)}</FitTime></div>
     {snapshot?.status === 'paused' && <div className="pause-banner"><strong>演出暫停中</strong><span>本次暫停 {formatTimerSeconds((times?.currentPauseMs ?? 0) / 1000)}</span></div>}
     {snapshot?.status === 'idle' && <p>準備開始</p>}
     {snapshot && <p>累計暫停 {formatTimerSeconds((times?.pausedMs ?? 0) / 1000)}</p>}

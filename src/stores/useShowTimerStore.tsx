@@ -69,7 +69,8 @@ export interface ShowTimerStoreValue {
   setSelectedTagIds: (ids: string[]) => void
   setCueTags: (tags: CueTag[]) => void
   setCueMarkTags: (id: string, ids: string[]) => void
-  addCueMark: () => void
+  addCueMark: (tagIds?: string[]) => void
+  updateCueMarkTime: (id: string, seconds: number) => void
   updateCueMarkNote: (
     cueMarkId: string,
     note: string,

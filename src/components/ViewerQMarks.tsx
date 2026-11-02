@@ -1,6 +1,7 @@
+import FitTime from './FitTime'
 import { useTagFilter } from '../services/useTagFilter'
-import { TagChoices, TagBadges } from './CueTags'
-import { matchesTags, type CueTag } from '../services/CueTags'
+import { TagChoices } from './CueTags'
+import { matchesTags, cueRowBackground, type CueTag } from '../services/CueTags'
 import { memo, useEffect, useRef } from 'react'
 import type { CueMark } from '../models/CueMark'
 import { formatTimerSeconds } from '../services/TimerEngine'
@@ -43,11 +44,11 @@ export default memo(function ViewerQMarks({ marks: receivedMarks, tags = emptyTa
       <table className="viewer-marks-table">
         <thead><tr><th scope="col">M</th><th scope="col">Time</th><th scope="col">Act</th><th scope="col">Note</th></tr></thead>
         <tbody>{visible.length === 0 ? <tr><td colSpan={4} className="viewer-marks-empty">沒有符合條件的 Q Mark</td></tr> : visible.map(({ mark, index }) =>
-          <tr key={mark.id} data-mark-id={mark.id}>
+          <tr key={mark.id} data-mark-id={mark.id} style={{ backgroundImage: cueRowBackground(mark, tags) }}>
             <td>{index + 1}</td>
-            <td className="viewer-mark-time">{formatTimerSeconds(mark.elapsedSeconds)}</td>
+            <td className="viewer-mark-time"><FitTime>{formatTimerSeconds(mark.elapsedSeconds)}</FitTime></td>
             <td>{mark.segmentName}</td>
-            <td className="viewer-mark-note"><TagBadges tags={tags} mark={mark} />{mark.note || <span className="viewer-mark-placeholder">Q{index + 1}</span>}</td>
+            <td className="viewer-mark-note">{mark.note || <span className="viewer-mark-placeholder">Q{index + 1}</span>}</td>
           </tr>,
         )}</tbody>
       </table>

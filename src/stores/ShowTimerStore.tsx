@@ -1,3 +1,4 @@
+import { defaultCueTags } from '../services/CueTags'
 import { toggleSubTimer, resetSubTimer } from '../services/SubTimer'
 import { insertCueMark, moveCueMark as reorderCueMark } from '../services/CueMarkOrder'
 import { isValidTimerRun } from '../services/RunValidation'
@@ -96,7 +97,7 @@ export function ShowTimerProvider({
     () => {
       const savedProject = loadProject()
 
-      return savedProject ?? createShowProject()
+      return savedProject ? { ...savedProject, cueTags: savedProject.cueTags ?? defaultCueTags() } : createShowProject()
     },
   )
 
@@ -505,7 +506,7 @@ export function ShowTimerProvider({
 
   const selectedTagIds = tagSelection.projectId === project.projectId ? tagSelection.ids.filter(id => project.cueTags?.some(tag => tag.id === id)) : []
 
-  function addCueMark() {
+  function addCueMark(tagIds = selectedTagIds) {
     if (
       timerRun.status !== 'running' ||
       timerRun.currentSegmentIndex < 0
@@ -546,7 +547,7 @@ export function ShowTimerProvider({
           segmentType: segment.type,
           elapsedSeconds,
           note: '',
-          tagIds: selectedTagIds,
+          tagIds: tagIds.filter(id => currentProject.cueTags?.some(tag => tag.id === id)),
           createdAt: now.toISOString(),
         },
       ),
@@ -665,6 +666,10 @@ export function ShowTimerProvider({
     })),
     addCueMark,
     moveCueMark,
+    updateCueMarkTime: (id, seconds) => {
+      if (!Number.isFinite(seconds) || seconds < 0) return
+      updateProject(current => ({ ...current, cueMarks: current.cueMarks.map(mark => mark.id === id ? { ...mark, elapsedSeconds: seconds } : mark) }))
+    },
     updateCueMarkNote,
     deleteCueMark,
   }

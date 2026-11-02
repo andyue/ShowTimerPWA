@@ -1,3 +1,4 @@
+import FitTime from './FitTime'
 import { useEffect, useState } from 'react'
 import { useShowTimerStore } from '../stores/useShowTimerStore'
 import { formatClockTime, formatTimerSeconds } from '../services/TimerEngine'
@@ -23,7 +24,7 @@ export function SubTimerControl() {
   const formatted = formatTimerSeconds(seconds)
   return <section className="sub-timer" aria-label="Sub timer">
     <strong>Sub timer</strong>
-    <output className="sub-timer-time">{seconds < 3600 ? formatted.slice(3) : formatted}</output>
+    <output className="sub-timer-time"><FitTime>{seconds < 3600 ? formatted.slice(3) : formatted}</FitTime></output>
     <button type="button" className="sub-timer-toggle" onClick={toggleSubTimer}>{running ? 'Stop' : 'Start'}</button>
     <button type="button" className="sub-timer-reset" onClick={() => {
       if (!running || window.confirm('停止並保存本次 Sub timer 紀錄，再歸零？')) resetSubTimer()

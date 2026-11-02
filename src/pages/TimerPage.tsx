@@ -1,3 +1,4 @@
+import FitTime from '../components/FitTime'
 import { useMemo } from 'react'
 import { sortCueMarks } from '../services/CueMarkOrder'
 import WallClock from '../components/WallClock'
@@ -99,7 +100,7 @@ export default function TimerPage() {
             : 'timer-display'
         }
       >
-        {formatTimerSeconds(displaySeconds)}
+        <FitTime>{formatTimerSeconds(displaySeconds)}</FitTime>
       </div>
       <SubTimerControl />
       </div>
@@ -128,9 +129,9 @@ export default function TimerPage() {
                   <span>Started At</span>
 
                   <strong>
-                    {formatClockTime(
+                    <FitTime>{formatClockTime(
                       timerRun.startedAtMs,
-                    )}
+                    )}</FitTime>
                   </strong>
                 </div>
 
@@ -143,12 +144,12 @@ export default function TimerPage() {
                       </span>
 
                       <strong>
-                        {formatTimerSeconds(
+                        <FitTime>{formatTimerSeconds(
                           getRemainingOrDelaySeconds(
                             currentSegment,
                             elapsedSeconds,
                           ),
-                        )}
+                        )}</FitTime>
                       </strong>
                     </div>
 
@@ -156,9 +157,9 @@ export default function TimerPage() {
                       <span>Planned End</span>
 
                       <strong>
-                        {formatClockTime(
+                        <FitTime>{formatClockTime(
                           plannedEndMs,
-                        )}
+                        )}</FitTime>
                       </strong>
                     </div>
                   </>
@@ -168,9 +169,9 @@ export default function TimerPage() {
                   <span>淨演出時間</span>
 
                   <strong>
-                    {formatTimerSeconds(
+                    <FitTime>{formatTimerSeconds(
                       elapsedSeconds,
-                    )}
+                    )}</FitTime>
                   </strong>
                 </div>
               </div>

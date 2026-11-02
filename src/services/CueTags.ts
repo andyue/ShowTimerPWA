@@ -2,8 +2,9 @@ import type { CueMark } from '../models/CueMark'
 
 export interface CueTag { id: string; name: string; color: string }
 export const TAG_COLORS = ['#f87171', '#60a5fa', '#4ade80', '#c084fc', '#fbbf24', '#fb923c']
+export const defaultCueTags = (): CueTag[] => ['紅色', '藍色', '綠色', '紫色'].map((name, i) => ({ id: `default-color-${i}`, name, color: TAG_COLORS[i] }))
 export function parseCueTags(value: unknown): CueTag[] {
-  if (value === undefined) return []
+  if (value === undefined) return defaultCueTags()
   if (!Array.isArray(value) || value.length > 32) throw new Error('標籤清單格式不正確（最多 32 個）')
   const ids = new Set<string>()
   return value.map(tag => {
@@ -23,4 +24,10 @@ export function matchesTags(mark: CueMark, selected: string[], tags: CueTag[]) {
   if (!selected.length) return true
   const ids = (mark.tagIds ?? []).filter(id => tags.some(tag => tag.id === id))
   return (!ids.length && selected.includes('untagged')) || ids.some(id => selected.includes(id))
+}
+
+export function cueRowBackground(mark: CueMark, tags: CueTag[]) {
+  const colors = tags.filter(tag => mark.tagIds?.includes(tag.id)).map(tag => tag.color)
+  if (!colors.length) return undefined
+  return `linear-gradient(90deg, ${colors.map((color, i) => `${color}33 ${i * 100 / colors.length}%, ${color}33 ${(i + 1) * 100 / colors.length}%`).join(', ')})`
 }

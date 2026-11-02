@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useState, useId, useRef, type CSSProperties } from 'react'
 import type { CueMark } from '../models/CueMark'
 import { TAG_COLORS, type CueTag } from '../services/CueTags'
 import { useShowTimerStore } from '../stores/useShowTimerStore'
@@ -15,10 +15,25 @@ export function TagChoices({ tags, selected, onChange, filter = false }: { tags:
 export function TagBadges({ tags, mark }: { tags: CueTag[]; mark: CueMark }) {
   return <span className="tag-badges">{tags.filter(tag => mark.tagIds?.includes(tag.id)).map(tag => <span className="tag-chip" style={style(tag.color)} key={tag.id}><i />{tag.name}</span>)}</span>
 }
-export function NewMarkTags() {
-  const { project, selectedTagIds, setSelectedTagIds } = useShowTimerStore()
-  if (!project.cueTags?.length) return null
-  return <div className="new-mark-tags" aria-label="新增 Q Mark 標籤"><span>新增標籤</span><TagChoices tags={project.cueTags} selected={selectedTagIds} onChange={setSelectedTagIds} /></div>
+export function TagDropdown({ tags, mark, number, onChange }: { tags: CueTag[]; mark: CueMark; number: number; onChange: (ids: string[]) => void }) {
+  const selected = mark.tagIds ?? []
+  const active = tags.filter(tag => selected.includes(tag.id))
+  const menu = useRef<HTMLDivElement>(null)
+  const id = useId()
+  const title = active.map(tag => tag.name).join('、') || '無顏色'
+  return <div className="mark-tag-editor">
+    <button type="button" className="tag-swatch-button" aria-label={`Q${number} 標籤`} title={title} popoverTarget={id} onClick={event => {
+      const rect = event.currentTarget.getBoundingClientRect()
+      if (menu.current) {
+        menu.current.style.left = `${Math.max(8, Math.min(rect.right - 190, window.innerWidth - 206))}px`
+        menu.current.style.top = `${Math.max(8, Math.min(rect.bottom + 3, window.innerHeight - 260))}px`
+      }
+    }}>{active.length ? active.map(tag => <i key={tag.id} style={{ background: tag.color }} />) : <span aria-hidden="true">⊠</span>}</button>
+    <div ref={menu} id={id} popover="auto" className="tag-dropdown" role="group" aria-label={`Q${number} 顏色選單`}>
+      <button type="button" onClick={() => onChange([])}>無顏色（清除全部）</button>
+      {tags.map(tag => <label key={tag.id} style={style(tag.color)}><input type="checkbox" checked={selected.includes(tag.id)} onChange={() => onChange(toggle(selected, tag.id))} /><i />{tag.name}</label>)}
+    </div>
+  </div>
 }
 export function CueTagManager() {
   const { project, setCueTags } = useShowTimerStore()
