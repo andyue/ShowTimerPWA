@@ -1,5 +1,12 @@
 # Release notes
 
+## 2026-11-02 — Q Mark 顏色標籤與精簡計時畫面
+
+- 自訂標籤名稱與顏色，每筆 Q Mark 可選多個標籤；JSON、CSV 與廣播保留標籤。
+- Timer、Q Marks 與觀看端可各自篩選全部、未分類或指定標籤，保留原 Cue 編號。
+- 主計時放大、Sub timer 改橫排，段落卡片改成緊湊雙欄。
+- 主計時上方顯示每秒更新的裝置本地實際時間。
+
 ## 2026-10-31 — 共用 Sub timer 與 Qmark
 
 - 手機 Timer／Qmark 分頁顯示同一個 Sub timer，切換分頁不會重新計時。

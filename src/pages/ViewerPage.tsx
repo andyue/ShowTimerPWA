@@ -1,3 +1,4 @@
+import WallClock from '../components/WallClock'
 import ViewerQMarks from '../components/ViewerQMarks'
 import { useEffect, useState } from 'react'
 import { projectSnapshot, validateSocketUrl, type BroadcastSnapshot } from '../services/Broadcast'
@@ -87,6 +88,7 @@ export default function ViewerPage() {
     <p className={status.startsWith('已同步') ? 'viewer-connected' : 'viewer-warning'} role="status">{status}</p>
     <h1>{snapshot?.projectName || 'ShowTimer'}</h1>
     <h2>{snapshot?.status === 'finished' ? '演出已完成' : snapshot?.segment?.name || '等待廣播'}</h2>
+    <WallClock />
     <div className="viewer-time">{formatTimerSeconds(display)}</div>
     {snapshot?.status === 'paused' && <div className="pause-banner"><strong>演出暫停中</strong><span>本次暫停 {formatTimerSeconds((times?.currentPauseMs ?? 0) / 1000)}</span></div>}
     {snapshot?.status === 'idle' && <p>準備開始</p>}
@@ -97,6 +99,6 @@ export default function ViewerPage() {
     {!window.isSecureContext && <p className="section-note">區網觀看模式：請在裝置設定中關閉自動鎖定，並保持此頁在前景。</p>}
     <small>{wakeStatus}</small>
     </section>
-    <ViewerQMarks marks={snapshot?.cueMarks} />
+    <ViewerQMarks marks={snapshot?.cueMarks} tags={snapshot?.cueTags} scope={`viewer:${new URLSearchParams(location.hash.slice(1)).get("watch")}`} />
   </main>
 }

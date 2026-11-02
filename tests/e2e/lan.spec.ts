@@ -45,7 +45,7 @@ test('LAN host auto-configures and a private-IP mobile viewer works without inte
   await qmarks.locator('textarea').fill('燈光 GO\n音樂淡入')
   await expect(viewerRows).toContainText('燈光 GO')
   await expect(viewerRows).toContainText('音樂淡入')
-  await expect(viewer.locator('.viewer-marks textarea, .viewer-marks input, .viewer-marks button')).toHaveCount(0)
+  await expect(viewer.locator('.viewer-marks-table textarea, .viewer-marks-table input, .viewer-marks-table button')).toHaveCount(0)
   await timer.getByRole('button', { name: 'Pause 暫停' }).click()
   await expect(viewer.locator('.pause-banner')).toContainText('演出暫停中')
   const frozen = await viewer.locator('.viewer-time').textContent()

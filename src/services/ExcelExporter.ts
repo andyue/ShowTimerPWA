@@ -1,3 +1,4 @@
+import { parseCueTags, parseTagIds } from './CueTags'
 import { parseSubTimer } from './SubTimer'
 import { sortCueMarks } from './CueMarkOrder'
 import { parsePauseRecords } from './PauseValidation'
@@ -119,6 +120,10 @@ export function exportProjectToCsv(
     ]),
     ['', '', '', '', '', JSON.stringify(project.subTimer ?? { records: [], reset: true })],
     [],
+    ['Cue Tags'],
+    ['Definitions'],
+    [JSON.stringify(project.cueTags ?? [])],
+    [],
     ['Marks'],
     [
       'Label',
@@ -130,6 +135,7 @@ export function exportProjectToCsv(
       'Created At',
       'Note',
       'Display Order',
+      'Tag IDs',
     ],
     ...getSortedCueMarks(project).map(
       (cueMark) => [
@@ -146,6 +152,7 @@ export function exportProjectToCsv(
         cueMark.createdAt,
         cueMark.note,
         cueMark.displayOrder ?? '',
+        JSON.stringify(cueMark.tagIds ?? []),
       ],
     ),
   ]
@@ -209,6 +216,10 @@ export function importProjectFromCsv(
     segments,
     results,
     cueMarks,
+    cueTags: (() => {
+      const { dataRows } = getHeaderAndDataRows(getSectionRows(rows, 'Cue Tags'))
+      return parseCueTags(dataRows[0]?.[0] ? JSON.parse(dataRows[0][0]) : undefined)
+    })(),
     subTimer: (() => {
       const rows = getSectionRows(rowsForSubTimer, 'Sub Timer')
       const { headers, dataRows } = getHeaderAndDataRows(rows)
@@ -426,6 +437,7 @@ function parseCueMarks(
             getCell(row, headers, 'Type'),
           ) ?? segment.type,
         elapsedSeconds,
+        tagIds: parseTagIds(JSON.parse(getCell(row, headers, 'Tag IDs') || '[]')),
         note: getCell(row, headers, 'Note'),
         displayOrder: parseNonNegativeInteger(getCell(row, headers, 'Display Order')) ?? undefined,
         createdAt:
@@ -534,7 +546,7 @@ function getSectionRows(
 
     if (
       row.length === 1 &&
-      ['Segments', 'Completed Results', 'Marks', 'Sub Timer'].includes(
+      ['Segments', 'Completed Results', 'Marks', 'Sub Timer', 'Cue Tags'].includes(
         row[0],
       )
     ) {

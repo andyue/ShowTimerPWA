@@ -1,3 +1,4 @@
+import type { CueTag } from '../services/CueTags'
 import type { SubTimerState } from '../services/SubTimer'
 import type { CueMark } from './CueMark'
 import type { SegmentResult } from './SegmentResult'
@@ -19,6 +20,7 @@ export interface ShowProject {
   segments: ShowSegment[]
   results: SegmentResult[]
   cueMarks: CueMark[]
+  cueTags?: CueTag[]
   subTimer?: SubTimerState
 }
 

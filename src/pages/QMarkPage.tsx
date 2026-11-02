@@ -1,3 +1,7 @@
+import { useTagFilter } from '../services/useTagFilter'
+import WallClock from '../components/WallClock'
+import { TagChoices, TagBadges, NewMarkTags } from '../components/CueTags'
+import { matchesTags } from '../services/CueTags'
 import { SubTimerControl } from '../components/SubTimer'
 import { sortCueMarks } from '../services/CueMarkOrder'
 import {
@@ -21,7 +25,12 @@ export default function QMarkPage() {
     updateCueMarkNote,
     deleteCueMark,
     moveCueMark,
+    setCueMarkTags,
   } = useShowTimerStore()
+
+  const [filter, setFilter] = useTagFilter(`qmarks:${project.projectId}`)
+  const tags = project.cueTags ?? []
+  const effectiveFilter = filter.filter(id => id === 'untagged' || tags.some(tag => tag.id === id))
 
   const canAddCueMark =
     timerRun.status === 'running'
@@ -129,6 +138,7 @@ export default function QMarkPage() {
 
             <strong>{currentSegment.name}{timerRun.status === 'paused' ? ' · 暫停中' : ''}</strong>
 
+            <WallClock />
             <div className="qmark-live-time">
               {formatTimerSeconds(displaySeconds)}
             </div>
@@ -148,6 +158,7 @@ export default function QMarkPage() {
 
             <strong>Not Running</strong>
 
+            <WallClock />
             <div className="qmark-live-time muted-time">
               00:00:00
             </div>
@@ -157,6 +168,8 @@ export default function QMarkPage() {
         <SubTimerControl />
         </div>
 
+        <NewMarkTags />
+        <div className="mark-filter" aria-label="Q Mark 篩選"><span>顯示標籤</span><TagChoices tags={tags} selected={effectiveFilter} onChange={setFilter} filter /></div>
         <div className="qmark-table-frame">
           <table className="qmark-table">
             <thead>
@@ -171,18 +184,18 @@ export default function QMarkPage() {
             </thead>
 
             <tbody>
-              {sortedCueMarks.length === 0 ? (
+              {sortedCueMarks.filter(mark => matchesTags(mark, effectiveFilter, tags)).length === 0 ? (
                 <tr>
                   <td
                     className="qmark-empty-cell"
                     colSpan={6}
                   >
-                    目前還沒有 Q Mark。
+                    沒有符合條件的 Q Mark。
                   </td>
                 </tr>
               ) : (
                 sortedCueMarks.map(
-                  (cueMark, index) => (
+                  (cueMark, index) => matchesTags(cueMark, effectiveFilter, tags) && (
                     <tr
                       key={cueMark.id}
                       ref={
@@ -213,6 +226,8 @@ export default function QMarkPage() {
                       </td>
 
                       <td>
+                        <TagBadges tags={tags} mark={cueMark} />
+                        {tags.length > 0 && <details className="mark-tag-editor"><summary aria-label={`Q${index + 1} 標籤`}>標籤</summary><TagChoices tags={tags} selected={cueMark.tagIds ?? []} onChange={ids => setCueMarkTags(cueMark.id, ids)} /></details>}
                         <label
                           className="qmark-table-note"
                           data-note={cueMark.note || `Q${index + 1}`}

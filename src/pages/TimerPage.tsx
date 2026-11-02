@@ -1,3 +1,7 @@
+import { useMemo } from 'react'
+import { sortCueMarks } from '../services/CueMarkOrder'
+import WallClock from '../components/WallClock'
+import ViewerQMarks from '../components/ViewerQMarks'
 import { SubTimerControl, SubTimerHistory } from '../components/SubTimer'
 import GuardedAction from '../components/GuardedAction'
 import PauseHistory from '../components/PauseHistory'
@@ -22,6 +26,8 @@ export default function TimerPage() {
     resumeShow,
     updatePauseNote,
   } = useShowTimerStore()
+
+  const sortedMarks = useMemo(() => sortCueMarks(project.cueMarks), [project.cueMarks])
 
   const currentSegment =
     timerRun.currentSegmentIndex >= 0
@@ -74,7 +80,7 @@ export default function TimerPage() {
         : 0
 
   return (
-    <section className="page">
+    <section className="page timer-page">
       <header className="page-header">
         <h1>
           {project.projectName.trim() ||
@@ -83,6 +89,7 @@ export default function TimerPage() {
       </header>
 
       <div className="timer-clock-row">
+      <WallClock />
       <div
         className={
           currentSegment?.type ===
@@ -114,7 +121,6 @@ export default function TimerPage() {
               }
             >
               <h2>{currentSegment.name}</h2>
-              <p>累計暫停 {formatTimerSeconds(getPausedMs(timerRun) / 1000)} · 總耗時 {formatTimerSeconds((timerRun.nowMs - timerRun.startedAtMs) / 1000)}</p>
               <PauseHistory pauses={timerRun.pauses} nowMs={timerRun.nowMs} onNote={updatePauseNote} />
 
               <div className="timer-stat-grid">
@@ -205,6 +211,8 @@ export default function TimerPage() {
             in this Show File.
           </p>
         )}
+
+        <ViewerQMarks marks={sortedMarks} tags={project.cueTags} scope={`timer:${project.projectId}`} />
 
         <h2>Show Review</h2>
 

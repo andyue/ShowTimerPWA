@@ -1,3 +1,4 @@
+import { CueTagManager } from '../components/CueTags'
 import ConnectionsPanel from '../components/ConnectionsPanel'
 import {
   useRef,
@@ -388,6 +389,7 @@ export default function ToolsPage() {
             Reset Show File
           </button>
         </section>
+        <CueTagManager />
         <ConnectionsPanel />
         <section className="tool-section resource-links">
           <h2>下載與使用說明</h2>

@@ -91,6 +91,7 @@ function createRunningTimerRun(
 export function ShowTimerProvider({
   children,
 }: ShowTimerProviderProps) {
+  const [tagSelection, setTagSelection] = useState<{ projectId: string; ids: string[] }>({ projectId: '', ids: [] })
   const [project, setProject] = useState<ShowProject>(
     () => {
       const savedProject = loadProject()
@@ -502,6 +503,8 @@ export function ShowTimerProvider({
     setTimerRun(idleTimerRun)
   }
 
+  const selectedTagIds = tagSelection.projectId === project.projectId ? tagSelection.ids.filter(id => project.cueTags?.some(tag => tag.id === id)) : []
+
   function addCueMark() {
     if (
       timerRun.status !== 'running' ||
@@ -543,6 +546,7 @@ export function ShowTimerProvider({
           segmentType: segment.type,
           elapsedSeconds,
           note: '',
+          tagIds: selectedTagIds,
           createdAt: now.toISOString(),
         },
       ),
@@ -580,6 +584,7 @@ export function ShowTimerProvider({
           segmentName: segment?.name ?? '未指定段落',
           segmentType: segment?.type ?? 'act',
           elapsedSeconds,
+          tagIds: selectedTagIds,
           note: `Sub timer 時長 ${formatTimerSeconds(duration)}`,
           createdAt: new Date(now).toISOString(),
         }),
@@ -649,6 +654,14 @@ export function ShowTimerProvider({
     updateSubTimerNote: (id, note) => updateProject(current => ({
       ...current,
       subTimer: current.subTimer ? { ...current.subTimer, records: current.subTimer.records.map(record => record.id === id ? { ...record, note } : record) } : undefined,
+    })),
+    selectedTagIds,
+    setSelectedTagIds: ids => setTagSelection({ projectId: project.projectId, ids }),
+    setCueTags: tags => updateProject(current => ({ ...current, cueTags: tags,
+      cueMarks: current.cueMarks.map(mark => ({ ...mark, tagIds: (mark.tagIds ?? []).filter(id => tags.some(tag => tag.id === id)) })),
+    })),
+    setCueMarkTags: (id, ids) => updateProject(current => ({ ...current,
+      cueMarks: current.cueMarks.map(mark => mark.id === id ? { ...mark, tagIds: ids.filter(tagId => current.cueTags?.some(tag => tag.id === tagId)) } : mark),
     })),
     addCueMark,
     moveCueMark,

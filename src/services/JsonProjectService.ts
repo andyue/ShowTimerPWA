@@ -1,3 +1,4 @@
+import { parseCueTags, parseTagIds } from './CueTags'
 import { parseSubTimer } from './SubTimer'
 import { parsePauseRecords } from './PauseValidation'
 import type { SegmentResult } from '../models/SegmentResult'
@@ -163,6 +164,7 @@ export function validateShowProject(
         return { ...result, ...(result.pauses === undefined ? {} : { pauses: parsePauseRecords(JSON.stringify(result.pauses)) }) } as unknown as SegmentResult
       }),
     cueMarks,
+    cueTags: parseCueTags(value.cueTags),
     subTimer: parseSubTimer(value.subTimer),
   }
 }
@@ -245,6 +247,7 @@ function validateCueMark(
 
   return {
     ...(Number.isInteger(value.displayOrder) && Number(value.displayOrder) >= 0 ? { displayOrder: Number(value.displayOrder) } : {}),
+    tagIds: parseTagIds(value.tagIds),
     id: value.id,
     label: value.label,
     segmentId: value.segmentId,

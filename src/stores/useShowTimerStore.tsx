@@ -1,3 +1,4 @@
+import type { CueTag } from '../services/CueTags'
 import {
   createContext,
   useContext,
@@ -64,6 +65,10 @@ export interface ShowTimerStoreValue {
   resetSubTimer: () => void
   updateSubTimerNote: (id: string, note: string) => void
   moveCueMark: (id: string, direction: 'up' | 'down') => void
+  selectedTagIds: string[]
+  setSelectedTagIds: (ids: string[]) => void
+  setCueTags: (tags: CueTag[]) => void
+  setCueMarkTags: (id: string, ids: string[]) => void
   addCueMark: () => void
   updateCueMarkNote: (
     cueMarkId: string,

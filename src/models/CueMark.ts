@@ -1,6 +1,7 @@
 import type { SegmentType } from './ShowSegment'
 
 export interface CueMark {
+  tagIds?: string[]
   displayOrder?: number
   id: string
   label: string
