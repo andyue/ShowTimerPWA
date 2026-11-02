@@ -1247,8 +1247,6 @@ button:disabled {
 .timer-stat { gap: 2px; }
 .timer-stat span { font-size: 0.8rem; }
 .timer-stat strong { font-size: clamp(1.1rem, 5vw, 1.6rem); }
-.timer-page .viewer-marks { margin: 14px 0; }
-.timer-page .viewer-marks-scroll { max-height: 260px; }
 .tag-choices { display: flex; flex-wrap: wrap; gap: 5px; }
 .tag-chip { --tag-color: #aaa; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #666; border-radius: 8px; background: #202020; color: #eee; padding: 4px 7px; font-size: 0.78rem; line-height: 1.3; overflow-wrap: anywhere; }
 button.tag-chip { min-height: 34px; cursor: pointer; }

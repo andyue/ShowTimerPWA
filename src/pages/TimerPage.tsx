@@ -1,8 +1,5 @@
 import FitTime from '../components/FitTime'
-import { useMemo } from 'react'
-import { sortCueMarks } from '../services/CueMarkOrder'
 import WallClock from '../components/WallClock'
-import ViewerQMarks from '../components/ViewerQMarks'
 import { SubTimerControl, SubTimerHistory } from '../components/SubTimer'
 import GuardedAction from '../components/GuardedAction'
 import PauseHistory from '../components/PauseHistory'
@@ -27,8 +24,6 @@ export default function TimerPage() {
     resumeShow,
     updatePauseNote,
   } = useShowTimerStore()
-
-  const sortedMarks = useMemo(() => sortCueMarks(project.cueMarks), [project.cueMarks])
 
   const currentSegment =
     timerRun.currentSegmentIndex >= 0
@@ -212,8 +207,6 @@ export default function TimerPage() {
             in this Show File.
           </p>
         )}
-
-        <ViewerQMarks marks={sortedMarks} tags={project.cueTags} scope={`timer:${project.projectId}`} />
 
         <h2>Show Review</h2>
 
