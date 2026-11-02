@@ -70,6 +70,7 @@ test('pause, restore after reload, resume, net cue time, finish paused with comp
 test('broadcast late join, pause/resume, reconnect and read-only mobile viewer', async ({ page, browser }) => {
   await seed(page)
   const tools = page.locator('.desktop-layout .tools-column')
+  await tools.getByText('進階連線設定', { exact: true }).click()
   await tools.getByLabel('同步服務位址').fill('ws://127.0.0.1:8787')
   await tools.getByRole('button', { name: '開啟廣播', exact: true }).click()
   await expect(tools.getByText('廣播中', { exact: true })).toBeVisible()

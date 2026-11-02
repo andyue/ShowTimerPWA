@@ -12,7 +12,13 @@ interface LanConfig {
 
 export default function ConnectionsPanel() {
   const { room, broadcastStatus, startBroadcast, stopBroadcast, oscStatus, connectOsc, disconnectOsc } = useConnections()
-  const [url, setUrl] = useState(() => localStorage.getItem('showtimer-service') || import.meta.env.VITE_SYNC_URL || '')
+  const defaultSyncUrl = import.meta.env.VITE_SYNC_URL || 'wss://sync.bearwowo.party'
+  const [url, setUrl] = useState(() => {
+    const saved = localStorage.getItem('showtimer-service')
+    // Replace the retired trial endpoint while preserving custom servers.
+    return !saved || saved === 'wss://original-trackback-relate-screensaver.trycloudflare.com'
+      ? defaultSyncUrl : saved
+  })
   const [key, setKey] = useState('')
   const [lan, setLan] = useState<LanConfig | null>(null)
   const [viewerBase, setViewerBase] = useState('')
@@ -56,9 +62,12 @@ export default function ConnectionsPanel() {
         </div>
         <p className="section-note">請保持主控與啟動視窗開啟。更換 Wi-Fi／IP 後，重新啟動並分享新的 QR Code。多個位址時，選擇與手機同一個網路的位址。</p>
       </> : <>
-      <label className="field"><span>同步服務位址</span><input placeholder="wss://your-service.example.com" value={url} onChange={e => setUrl(e.target.value)} /></label>
       <label className="field"><span>建立房間金鑰</span><input type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} /></label>
-      <p className="section-note">需先部署同步服務。未設定時，本機計時仍可正常使用。</p>
+      <p className="section-note">輸入金鑰即可開啟廣播，再分享 QR Code 給觀看者。</p>
+      <details><summary>進階連線設定</summary>
+        <label className="field"><span>同步服務位址</span><input disabled={!!room} placeholder={defaultSyncUrl} value={url} onChange={e => setUrl(e.target.value)} /></label>
+        <button disabled={!!room} onClick={() => { setUrl(defaultSyncUrl); localStorage.removeItem('showtimer-service') }}>恢復預設服務</button>
+      </details>
       <div className="button-row">
         <button disabled={!url || !!room || broadcastStatus === '連線中…'} onClick={() => { localStorage.setItem('showtimer-service', url); startBroadcast(url, key) }}>開啟廣播</button>
         <button onClick={stopBroadcast}>停止廣播</button>

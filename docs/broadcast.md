@@ -4,6 +4,11 @@
 
 ## 架構
 
+Tools 預設使用 `wss://sync.bearwowo.party`；取得建立房間金鑰後即可開啟廣播。
+自訂服務位址可在「進階連線設定」修改，也可按「恢復預設服務」。
+先前儲存的試用入口 `wss://original-trackback-relate-screensaver.trycloudflare.com` 會自動改用預設服務。
+建立房間金鑰不會內建在前端。
+
 GitHub Pages 提供主控與觀看網頁。`server/sync.mjs` 是可部署在託管平台的 Node.js WebSocket 服務，保存目前狀態並推送給觀看端。無需把整個前端搬離 GitHub Pages。
 
 這個版本提供自有同步服務程式，不需 Supabase/Firebase 專案。雲端帳號與服務尚未代為建立，設定好後即可使用。
