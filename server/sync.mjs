@@ -5,6 +5,7 @@ import { randomBytes } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
 import { WebSocketServer, WebSocket } from 'ws'
 
+const capabilities = ['attention-v1']
 const token = () => randomBytes(24).toString('base64url')
 const send = (ws, value) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(value)) }
 
@@ -79,34 +80,59 @@ export function createSyncServer({ port = 8787, host = '127.0.0.1', origins = ['
       try { message = JSON.parse(raw.toString()) } catch { return ws.close(1008, 'Invalid JSON') }
       if (!message || typeof message !== 'object') return
       const fail = error => send(ws, { type: 'error', error })
-      if (message.type === 'ping') return send(ws, { type: 'pong', clientNow: message.clientNow, serverNow: Date.now() })
+      if (message.type === 'ping') return send(ws, { type: 'pong', clientNow: message.clientNow, serverNow: Date.now(), capabilities })
       if (message.type === 'create' && !session) {
-        if (createKey && message.key !== createKey) return fail('建立房間的服務金鑰不正確')
-        if (rooms.size >= 100) return fail('服務房間已滿，請稍後重試')
+        if (createKey && message.key !== createKey) return fail('Invalid room creation key')
+        if (rooms.size >= 100) return fail('Room limit reached. Try again later.')
         const id = token(), hostToken = token(), viewerToken = token()
         const room = { hostToken, viewerToken, host: ws, viewers: new Set(), snapshot: null, revision: 0,
           updatedAt: Date.now(), expiresAt: Date.now() + ttlMs }
         rooms.set(id, room); persist(); session = { id, role: 'host' }
-        return send(ws, { type: 'created', id, hostToken, viewerToken })
+        return send(ws, { type: 'created', id, hostToken, viewerToken, capabilities })
       }
       if (message.type === 'join' && !session) {
         const room = rooms.get(message.id)
-        if (!room || room.expiresAt < Date.now()) return fail('廣播已結束或房間不存在，請向主控取得新連結')
+        if (!room || room.expiresAt < Date.now()) return fail('Broadcast ended or room not found. Get a new link from the controller.')
         if (message.token === room.hostToken) {
-          if (room.host && room.host !== ws) return fail('已有另一個主控連線，請先關閉原主控')
+          if (room.host && room.host !== ws) return fail('Another controller is connected. Close it first.')
           room.host = ws; session = { id: message.id, role: 'host' }
-          send(ws, { type: 'joined', role: 'host' }); broadcast(room)
+          send(ws, { type: 'joined', role: 'host', capabilities }); broadcast(room)
         } else if (message.token === room.viewerToken) {
           room.viewers.add(ws); session = { id: message.id, role: 'viewer' }
-          send(ws, { type: 'joined', role: 'viewer' }); broadcast(room)
-        } else fail('觀看連結或主控憑證無效')
+          send(ws, { type: 'joined', role: 'viewer', capabilities }); broadcast(room)
+        } else fail('Invalid viewer link or controller credentials')
         return
       }
       const room = session && rooms.get(session.id)
-      if (!room) return fail('請先加入房間')
+      if (!room) return fail('Join a room first')
+      if (message.type === 'attention') {
+        const reject = error => send(ws, { type: 'attention-error', id: message.id, error })
+        if (session.role !== 'host' || room.host !== ws) return reject('Only the controller can send reminders')
+        const now = Date.now()
+        if (typeof message.id !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(message.id) ||
+            !['screen', 'cue'].includes(message.target) || !Number.isFinite(message.sentAtMs) ||
+            Math.abs(now - message.sentAtMs) > 2000) return reject('Invalid or expired reminder')
+        if (message.target === 'cue' && (typeof message.cueMarkId !== 'string' ||
+            !room.snapshot?.cueMarks?.some(mark => mark.id === message.cueMarkId))) return reject('Q Mark is not available in the broadcast')
+        room.attentionIds ??= new Set()
+        if (room.attentionIds.has(message.id)) return reject('Duplicate reminder ignored')
+        if (now - (room.lastAttentionAt ?? 0) < 1500) return reject('Please wait before sending another reminder')
+        room.lastAttentionAt = now
+        room.attentionIds.add(message.id)
+        if (room.attentionIds.size > 256) room.attentionIds.delete(room.attentionIds.values().next().value)
+        const event = { id: message.id, target: message.target, sentAtMs: now, expiresAtMs: now + 2500,
+          ...(message.target === 'cue' ? { cueMarkId: message.cueMarkId } : {}) }
+        // Transient only: never persist, snapshot, or replay this event on join/reconnect.
+        let viewers = 0
+        for (const viewer of room.viewers) {
+          if (viewer.readyState === WebSocket.OPEN) { send(viewer, { type: 'attention', event }); viewers++ }
+        }
+        send(ws, { type: 'attention-sent', id: message.id, target: message.target, viewers })
+        return
+      }
       if (message.type === 'publish') {
-        if (session.role !== 'host' || room.host !== ws) return fail('觀看端不能控制廣播')
-        if (!validSnapshot(message.snapshot)) return fail('同步資料格式不正確')
+        if (session.role !== 'host' || room.host !== ws) return fail('Viewers cannot control broadcasts')
+        if (!validSnapshot(message.snapshot)) return fail('Invalid broadcast data')
         room.snapshot = message.snapshot; room.updatedAt = Date.now(); room.expiresAt = Date.now() + ttlMs; room.revision++
         persist(); broadcast(room); send(ws, { type: 'published', revision: room.revision }); return
       }

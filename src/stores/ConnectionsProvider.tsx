@@ -1,3 +1,5 @@
+import { ATTENTION_CAPABILITY, ATTENTION_COOLDOWN_MS, type AttentionTarget } from '../services/Attention'
+import { broadcastMessage } from '../services/BroadcastMessages'
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react'
 import { useShowTimerStore } from './useShowTimerStore'
 import { ConnectionsContext } from './ConnectionsContext'
@@ -17,9 +19,14 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
   const store = useShowTimerStore()
   const [room, setRoom] = useState<BroadcastRoom | null>(savedRoom)
   const [request, setRequest] = useState<{ url: string; key: string; viewerBaseUrl?: string } | null>(null)
-  const [broadcastStatus, setBroadcastStatus] = useState('尚未開啟')
+  const [broadcastStatus, setBroadcastStatus] = useState('Not broadcasting')
+  const [supportsAttention, setSupportsAttention] = useState(false)
+  const [attentionStatus, setAttentionStatus] = useState('Start a broadcast to send reminders.')
+  const lastAttentionAt = useRef(0)
+  const pendingAttention = useRef('')
+  const attentionTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [osc, setOsc] = useState<{ url: string; token: string } | null>(null)
-  const [oscStatus, setOscStatus] = useState('未連線')
+  const [oscStatus, setOscStatus] = useState('Disconnected')
   const broadcastSocket = useRef<WebSocket | null>(null)
   const roomRef = useRef(room)
   const offset = useRef(0)
@@ -28,7 +35,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     if (joined.current && broadcastSocket.current?.readyState === WebSocket.OPEN) {
       const message = JSON.stringify({ type: 'publish', snapshot: makeSnapshot(store.project, store.timerRun, Date.now(), offset.current) })
       if (new TextEncoder().encode(message).byteLength > 8 * 1024 * 1024) {
-        setBroadcastStatus('廣播資料超過 8 MB，請先匯出備份並減少 Q Mark 備註內容；本機計時仍可使用')
+        setBroadcastStatus('Broadcast exceeds 8 MB. Export a backup and shorten Q Mark notes. Local timers remain available.')
         return
       }
       broadcastSocket.current.send(message)
@@ -48,7 +55,9 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     function connect() {
       if (stopped) return
       joined.current = false
-      setBroadcastStatus('連線中…')
+      setSupportsAttention(false)
+      setAttentionStatus('Connecting reminder service…')
+      setBroadcastStatus('Connecting…')
       const ws = new WebSocket(url!)
       broadcastSocket.current = ws
       ws.onopen = () => {
@@ -61,6 +70,9 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
         try { data = JSON.parse(event.data) } catch { return }
         if (data.type === 'pong') {
           lastPong = Date.now()
+          const supported = Array.isArray(data.capabilities) && data.capabilities.includes(ATTENTION_CAPABILITY)
+          setSupportsAttention(supported)
+          if (!supported) setAttentionStatus('Update the sync server to enable broadcast reminders.')
           offset.current = data.serverNow - (Date.now() + data.clientNow) / 2
           if (!joined.current) {
             const current = roomRef.current
@@ -72,20 +84,26 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
           roomRef.current = next; setRoom(next)
           sessionStorage.setItem('showtimer-broadcast', JSON.stringify(next))
         }
-        if (data.type === 'published') setBroadcastStatus('廣播中')
+        if ((data.type === 'attention-sent' || data.type === 'attention-error') && data.id === pendingAttention.current) {
+          clearTimeout(attentionTimeout.current); pendingAttention.current = ''
+          setAttentionStatus(data.type === 'attention-error' ? data.error : `${data.target === 'screen' ? 'Screen' : 'Q Mark'} reminder sent to ${data.viewers} viewer(s).`)
+        }
+        if (data.type === 'published') setBroadcastStatus('Broadcasting')
         if (data.type === 'created' || data.type === 'joined') {
-          retryDelay = 1000; joined.current = true; setBroadcastStatus('廣播中'); publish()
+          retryDelay = 1000; joined.current = true; setBroadcastStatus('Broadcasting'); publish()
+          if (data.capabilities?.includes(ATTENTION_CAPABILITY)) setAttentionStatus('Click the large timer or a Q Mark number to remind viewers.')
         }
         if (data.type === 'error' || data.type === 'ended') {
           terminal = true; joined.current = false
-          setBroadcastStatus(data.error || '廣播已結束')
+          setBroadcastStatus(broadcastMessage(data.error))
           ws.close()
         }
       }
       ws.onerror = () => ws.close()
       ws.onclose = () => {
-        joined.current = false
-        if (!stopped && !terminal) { setBroadcastStatus('連線中斷，正在重連…'); reconnect = setTimeout(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, 15000) }
+        joined.current = false; setSupportsAttention(false)
+        clearTimeout(attentionTimeout.current); pendingAttention.current = ''
+        if (!stopped && !terminal) { setBroadcastStatus('Connection lost. Reconnecting…'); reconnect = setTimeout(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, 15000) }
       }
     }
     connect()
@@ -101,12 +119,13 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     return () => {
       stopped = true; clearTimeout(reconnect); clearInterval(heartbeat)
       document.removeEventListener('visibilitychange', visible)
+      clearTimeout(attentionTimeout.current); pendingAttention.current = ''
       broadcastSocket.current?.close(); joined.current = false
     }
   }, [url, request])
 
   const command = useEffectEvent((name: string) => {
-    if (document.hidden) { setOscStatus('已忽略指令：請保持主控畫面在前景'); return }
+    if (document.hidden) { setOscStatus('Command ignored: keep the controller in the foreground'); return }
     switch (name) {
       case 'start': store.startShow(); break
       case 'pause': store.pauseShow(); break
@@ -114,7 +133,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
       case 'next': if (store.timerRun.status === 'running') store.nextSegment(); break
       case 'mark': store.addCueMark(); break
     }
-    setOscStatus(`已連線 · 收到 ${name}`)
+    setOscStatus(`Connected · received ${name}`)
   })
   useEffect(() => {
     if (!osc) return
@@ -124,13 +143,13 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     let lastPong = Date.now()
     const seen = new Set<string>()
     function connect() {
-      setOscStatus('連線中…'); ws = new WebSocket(osc!.url)
+      setOscStatus('Connecting…'); ws = new WebSocket(osc!.url)
       ws.onopen = () => { lastPong = Date.now(); ws.send(JSON.stringify({ type: 'pair', token: osc!.token })) }
       ws.onmessage = e => {
         if (stopped) return
         let data
         try { data = JSON.parse(e.data) } catch { return }
-        if (data.type === 'paired') setOscStatus('已連線 · OSC 就緒')
+        if (data.type === 'paired') setOscStatus('Connected · OSC ready')
         if (data.type === 'pong') lastPong = Date.now()
         if (data.type === 'command' && typeof data.id === 'string' && !seen.has(data.id) && Math.abs(Date.now() - data.sentAt) < 2000) {
           if (seen.size > 500) seen.clear()
@@ -140,8 +159,8 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
       ws.onerror = () => ws.close()
       ws.onclose = e => {
         if (stopped) return
-        if (e.code === 1008) { setOscStatus('配對失敗：檢查配對碼，或關閉另一個主控'); return }
-        setOscStatus('OSC 斷線，正在重連…'); retry = setTimeout(connect, 2000)
+        if (e.code === 1008) { setOscStatus('Pairing failed: check the pairing code or close the other controller'); return }
+        setOscStatus('OSC disconnected. Reconnecting…'); retry = setTimeout(connect, 2000)
       }
     }
     connect()
@@ -154,7 +173,31 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     return () => { stopped = true; clearTimeout(retry); clearInterval(heartbeat); ws.close() }
   }, [osc])
 
+  function sendAttention(target: AttentionTarget, cueMarkId?: string) {
+    const socket = broadcastSocket.current
+    if (!supportsAttention || !joined.current || socket?.readyState !== WebSocket.OPEN) return
+    if (target === 'cue' && !store.project.cueMarks.some(mark => mark.id === cueMarkId)) return
+    const now = Date.now()
+    if (now - lastAttentionAt.current < ATTENTION_COOLDOWN_MS) {
+      setAttentionStatus('Please wait before sending another reminder.'); return
+    }
+    if (socket.bufferedAmount > 256 * 1024) {
+      setAttentionStatus('Network busy. Reminder was not sent; try again.'); return
+    }
+    lastAttentionAt.current = now
+    const id = crypto.randomUUID()
+    pendingAttention.current = id
+    socket.send(JSON.stringify({ type: 'attention', id, target, cueMarkId, sentAtMs: now + offset.current }))
+    clearTimeout(attentionTimeout.current)
+    setAttentionStatus('Sending reminder…')
+    attentionTimeout.current = setTimeout(() => {
+      pendingAttention.current = ''
+      setAttentionStatus('No reminder acknowledgement. Check the connection and try again.')
+    }, 3000)
+  }
+
   return <ConnectionsContext.Provider value={{ room, broadcastStatus, oscStatus,
+    canSendAttention: supportsAttention && broadcastStatus === 'Broadcasting', attentionStatus, sendAttention,
     startBroadcast: (raw, key, viewerBaseUrl) => {
       try {
         const validated = validateSocketUrl(raw)
@@ -164,11 +207,11 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     },
     stopBroadcast: () => {
       if (broadcastSocket.current?.readyState === WebSocket.OPEN && joined.current) broadcastSocket.current.send(JSON.stringify({ type: 'end' }))
-      roomRef.current = null; setRoom(null); setRequest(null); sessionStorage.removeItem('showtimer-broadcast'); setBroadcastStatus('已停止廣播')
+      roomRef.current = null; setRoom(null); setRequest(null); sessionStorage.removeItem('showtimer-broadcast'); setBroadcastStatus('Broadcast stopped'); setSupportsAttention(false); setAttentionStatus('Start a broadcast to send reminders.')
     },
     connectOsc: (raw, token) => {
       try { setOsc({ url: validateSocketUrl(raw, true), token }) } catch (error) { setOscStatus((error as Error).message) }
     },
-    disconnectOsc: () => { setOsc(null); setOscStatus('未連線') },
+    disconnectOsc: () => { setOsc(null); setOscStatus('Disconnected') },
   }}>{children}</ConnectionsContext.Provider>
 }

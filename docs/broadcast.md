@@ -83,3 +83,9 @@ Q Marks 與廣播觀看頁各自提供「全部／未分類／標籤」篩選，
 
 Q Mark 列尾以色塊開啟多選選單，⊠ 表示無顏色，× 刪除該筆。標籤以整列淡色底呈現，不占用 Note 空間；多色以分區底色表示。
 點擊 Q Mark 時間可輸入 HH:MM:SS，Enter 或離開欄位儲存，Escape 取消。分、秒須為 00–59；修改不影響主計時或現有列順序，並會同步廣播與保存在匯出檔。
+
+## Transient attention reminders
+
+Controllers click the large Timer display for a gentle white screen pulse, or a Q Mark's M number to highlight that mark on connected foreground viewers. A hidden filtered mark is shown temporarily without changing the saved filter. Reduced-motion viewers receive a static temporary highlight.
+
+The `attention-v1` capability is advertised in pong/create/join responses. Only the active authenticated host may send `{type:"attention", id, target:"screen"|"cue", cueMarkId?, sentAtMs}`. Cue targets use stable mark IDs in the current published snapshot. The service validates timestamps, deduplicates IDs and enforces a 1.5-second room cooldown. Events expire after 2.5 seconds and are neither persisted nor replayed. `attention-sent` counts sockets sent to, not confirmed on-screen delivery. Older servers leave reminder controls disabled. Deploy both viewer/controller assets and the sync service to use reminders over the Internet; bundled desktop LAN includes both.

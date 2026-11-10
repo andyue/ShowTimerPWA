@@ -27,7 +27,7 @@ const isLoopback = ip => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:12
 const isLanPeer = ip => isLoopback(ip) || isPrivateIPv4((ip || '').replace(/^::ffff:/, ''))
 
 export function createLanServer({ port = 8789, root = resolve(projectRoot, 'dist-lan'), addresses = lanAddresses() } = {}) {
-  if (!existsSync(resolve(root, 'index.html'))) throw new Error('找不到區網版網頁，請先執行 npm run build:lan')
+  if (!existsSync(resolve(root, 'index.html'))) throw new Error('LAN assets not found. Run npm run build:lan first.')
   root = resolve(root)
   const key = randomBytes(24).toString('base64url')
   const origins = []
@@ -40,7 +40,7 @@ export function createLanServer({ port = 8789, root = resolve(projectRoot, 'dist
     allowRequest: allowedHost,
     handleRequest: async (req, res) => {
       const reply = (status, text) => { res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(text) }
-      if (!allowedHost(req)) return reply(403, '僅允許本機與區域網路連線')
+      if (!allowedHost(req)) return reply(403, 'Only local and private LAN connections are allowed')
       res.setHeader('Cache-Control', 'no-store')
       res.setHeader('X-Content-Type-Options', 'nosniff')
       res.setHeader('Referrer-Policy', 'no-referrer')
@@ -50,7 +50,7 @@ export function createLanServer({ port = 8789, root = resolve(projectRoot, 'dist
       if (req.url === '/lan-config.json') {
         // Only the host computer can obtain the create key; never included in a QR code.
         if (!isLoopback(req.socket.remoteAddress) || ![localOrigin, localOrigin.replace('127.0.0.1', 'localhost')].includes(`http://${req.headers.host}`) ||
-            (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`)) return reply(403, '請在主控電腦開啟本機網址')
+            (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`)) return reply(403, 'Open the local URL on the controller computer')
         res.writeHead(200, { 'Content-Type': 'application/json' })
         return res.end(JSON.stringify({ mode: 'lan', key, serviceUrl: localOrigin.replace('http:', 'ws:'), viewerBases }))
       }
@@ -80,16 +80,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const addresses = lanAddresses()
     const service = createLanServer({ port: Number(process.env.LAN_PORT || 8789), addresses })
     service.http.on('error', error => {
-      console.error(error.code === 'EADDRINUSE' ? '區網連接埠已被使用，請先關閉另一個 ShowTimer 區網服務。' : error.message)
+      console.error(error.code === 'EADDRINUSE' ? 'LAN port is in use. Close the other ShowTimer LAN service first.' : error.message)
       process.exitCode = 1
       void service.close()
     })
     service.http.on('listening', () => {
       const port = service.http.address().port
-      console.log(`\nShowTimer 區網模式已啟動\n\n1. 主控電腦開啟：http://127.0.0.1:${port}/\n2. Tools → 區網廣播 → 開啟區網廣播\n3. 手機連同一個 Wi-Fi，掃描畫面上的觀看 QR Code\n`)
-      for (const a of addresses) console.log(`可分享的介面：${a.name} → http://${a.address}:${port}/`)
-      if (!addresses.length) console.log('尚未找到區網 IPv4 位址，請連接 Wi-Fi／網路線後重新啟動。')
-      console.log('\n請保持此視窗開啟。按 Ctrl+C 停止。Windows 防火牆如詢問，僅允許信任的私人網路。\n')
+      console.log(`\nShowTimer LAN is ready\n\n1. Open on the controller: http://127.0.0.1:${port}/\n2. Tools → LAN broadcast → Start LAN broadcast\n3. Connect viewers to the same Wi-Fi and scan the viewer QR code\n`)
+      for (const a of addresses) console.log(`Available interface: ${a.name} → http://${a.address}:${port}/`)
+      if (!addresses.length) console.log('No private IPv4 address found. Connect to Wi-Fi or Ethernet, then restart.')
+      console.log('\nKeep this window open. Press Ctrl+C to stop. If Windows Firewall asks, allow trusted private networks only.\n')
     })
     for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { void service.close().then(() => process.exit(0)) })
   } catch (error) { console.error(error.message); process.exitCode = 1 }

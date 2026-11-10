@@ -1,3 +1,4 @@
+import { useConnections } from '../stores/ConnectionsContext'
 import FitTime from '../components/FitTime'
 import WallClock from '../components/WallClock'
 import { SubTimerControl, SubTimerHistory } from '../components/SubTimer'
@@ -14,6 +15,7 @@ import {
 import { useShowTimerStore } from '../stores/useShowTimerStore'
 
 export default function TimerPage() {
+  const { canSendAttention, sendAttention, attentionStatus } = useConnections()
   const {
     project,
     timerRun,
@@ -86,23 +88,23 @@ export default function TimerPage() {
 
       <div className="timer-clock-row">
       <WallClock />
-      <div
+      <button type="button" disabled={!canSendAttention} onClick={() => sendAttention('screen')} aria-label="Send screen reminder" title={attentionStatus}
         className={
           currentSegment?.type ===
             'intermission' &&
           (timerRun.status === 'running' || timerRun.status === 'paused')
-            ? 'timer-display countdown-display'
-            : 'timer-display'
+            ? 'timer-display countdown-display attention-trigger'
+            : 'timer-display attention-trigger'
         }
       >
         <FitTime>{formatTimerSeconds(displaySeconds)}</FitTime>
-      </div>
+      </button>
       <SubTimerControl />
       </div>
 
       {timerRun.status === 'paused' && <div className="pause-banner" role="status">
-        <strong>演出暫停中</strong>
-        <span>本次暫停 {formatTimerSeconds((timerRun.nowMs - timerRun.pauses.at(-1)!.startedAtMs) / 1000)}</span>
+        <strong>Show paused</strong>
+        <span>Current pause {formatTimerSeconds((timerRun.nowMs - timerRun.pauses.at(-1)!.startedAtMs) / 1000)}</span>
       </div>}
       <div className="page-content">
         <SubTimerHistory />
@@ -161,7 +163,7 @@ export default function TimerPage() {
                 )}
 
                 <div className="timer-stat elapsed-stat">
-                  <span>淨演出時間</span>
+                  <span>Net show time</span>
 
                   <strong>
                     <FitTime>{formatTimerSeconds(
@@ -196,8 +198,8 @@ export default function TimerPage() {
           </div>
         ) : (
           <p>
-            請先到 Tools 新增 Act 或
-            Intermission。
+            Go to Tools and add an Act or
+            Intermission.
           </p>
         )}
 
@@ -211,7 +213,7 @@ export default function TimerPage() {
         <h2>Show Review</h2>
 
         {project.segments.length === 0 ? (
-          <p>目前還沒有演出段落。</p>
+          <p>No show segments yet.</p>
         ) : (
           <div className="review-list">
             {project.segments.map(
@@ -253,7 +255,7 @@ export default function TimerPage() {
         <h2>Completed Results</h2>
 
         {project.results.length === 0 ? (
-          <p>目前還沒有完成的 Segment。</p>
+          <p>No completed segments yet.</p>
         ) : (
           <div className="review-list">
             {project.results.map((result) => (
@@ -275,8 +277,8 @@ export default function TimerPage() {
                 </div>
 
                 <div>
-                  <span>淨演出 {formatTimerSeconds(result.elapsedSeconds)}</span>
-                  <span className="segment-meta inline-meta">暫停 {formatTimerSeconds(result.pausedSeconds ?? 0)} · 總耗時 {formatTimerSeconds(result.totalSeconds ?? result.elapsedSeconds)}</span>
+                  <span>Net show {formatTimerSeconds(result.elapsedSeconds)}</span>
+                  <span className="segment-meta inline-meta">Paused {formatTimerSeconds(result.pausedSeconds ?? 0)} · Total time {formatTimerSeconds(result.totalSeconds ?? result.elapsedSeconds)}</span>
                   <PauseHistory pauses={result.pauses ?? []} nowMs={timerRun.nowMs} onNote={updatePauseNote} />
                 </div>
               </div>
@@ -286,10 +288,10 @@ export default function TimerPage() {
       </div>
 
       <div className="timer-action-bar" key={`${project.projectId}:${currentSegment?.id}:${timerRun.status}:${timerRun.startedAtIso}`}>
-        {timerRun.status === 'running' && <GuardedAction className="secondary-button pause-button" onClick={pauseShow}>Pause 暫停</GuardedAction>}
+        {timerRun.status === 'running' && <GuardedAction className="secondary-button pause-button" onClick={pauseShow}>Pause</GuardedAction>}
         {timerRun.status === 'paused' && <>
-          <GuardedAction className="primary-button" onClick={resumeShow}>Resume 繼續演出</GuardedAction>
-          <GuardedAction className="secondary-button" confirmation="結束暫停並結束本段？最後一次暫停會計入紀錄。" onClick={nextSegment}>結束本段</GuardedAction>
+          <GuardedAction className="primary-button" onClick={resumeShow}>Resume</GuardedAction>
+          <GuardedAction className="secondary-button" confirmation="End the pause and finish this segment? The current pause will be recorded." onClick={nextSegment}>Finish segment</GuardedAction>
         </>}
         {timerRun.status === 'paused' ? null : <>
         {timerRun.status === 'running' ? (

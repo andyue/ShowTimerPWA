@@ -1,3 +1,4 @@
+import { useConnections } from '../stores/ConnectionsContext'
 import MarkTimeEditor from '../components/MarkTimeEditor'
 import FitTime from '../components/FitTime'
 import { useTagFilter } from '../services/useTagFilter'
@@ -20,6 +21,7 @@ import {
 import { useShowTimerStore } from '../stores/useShowTimerStore'
 
 export default function QMarkPage() {
+  const { canSendAttention, sendAttention, attentionStatus } = useConnections()
   const {
     project,
     timerRun,
@@ -124,8 +126,8 @@ export default function QMarkPage() {
   return (
     <section className="page qmark-page">
       <div className="page-content qmark-page-content">
-        <div className="mark-filter qmark-top-filter" aria-label="Q Mark 篩選" title="選取的顏色也會套用到新 Q Mark；全部或未分類時新增無顏色 Q Mark">
-          <span>顯示標籤</span><TagChoices tags={tags} selected={effectiveFilter} onChange={ids => { setFilter(ids); setSelectedTagIds(ids.filter(id => id !== 'untagged')) }} filter />
+        <div className="mark-filter qmark-top-filter" aria-label="Q Mark filter" title="Selected tags also apply to new Q Marks. All or Untagged creates untagged marks.">
+          <span>Show tags</span><TagChoices tags={tags} selected={effectiveFilter} onChange={ids => { setFilter(ids); setSelectedTagIds(ids.filter(id => id !== 'untagged')) }} filter />
         </div>
         <div className="qmark-mobile-clock-row">
         {currentSegment ? (
@@ -143,7 +145,7 @@ export default function QMarkPage() {
                 : 'Intermission'}
             </span>
 
-            <strong>{currentSegment.name}{timerRun.status === 'paused' ? ' · 暫停中' : ''}</strong>
+            <strong>{currentSegment.name}{timerRun.status === 'paused' ? ' · Paused' : ''}</strong>
 
             <WallClock />
             <div className="qmark-live-time">
@@ -179,13 +181,13 @@ export default function QMarkPage() {
           <table className="qmark-table">
             <thead>
               <tr>
-                <th scope="col" className="qmark-order-cell" aria-label="調整順序" />
+                <th scope="col" className="qmark-order-cell" aria-label="Reorder" />
                 <th scope="col">M</th>
                 <th scope="col">Time</th>
                 <th scope="col">Act</th>
                 <th scope="col">Note</th>
-                <th scope="col" aria-label="顏色">色</th>
-                <th scope="col" aria-label="刪除">×</th>
+                <th scope="col" aria-label="Color">Color</th>
+                <th scope="col" aria-label="Delete">×</th>
               </tr>
             </thead>
 
@@ -196,7 +198,7 @@ export default function QMarkPage() {
                     className="qmark-empty-cell"
                     colSpan={7}
                   >
-                    沒有符合條件的 Q Mark。
+                    No matching Q Marks.
                   </td>
                 </tr>
               ) : (
@@ -214,11 +216,11 @@ export default function QMarkPage() {
                     >
                       <td className="qmark-order-cell">
                         <div className="qmark-order-controls">
-                          <button type="button" aria-label={`上移 Q${index + 1}`} disabled={index === 0} onClick={() => moveCueMark(cueMark.id, 'up')}>↑</button>
-                          <button type="button" aria-label={`下移 Q${index + 1}`} disabled={index === sortedCueMarks.length - 1} onClick={() => moveCueMark(cueMark.id, 'down')}>↓</button>
+                          <button type="button" aria-label={`Move up Q${index + 1}`} disabled={index === 0} onClick={() => moveCueMark(cueMark.id, 'up')}>↑</button>
+                          <button type="button" aria-label={`Move down Q${index + 1}`} disabled={index === sortedCueMarks.length - 1} onClick={() => moveCueMark(cueMark.id, 'down')}>↓</button>
                         </div>
                       </td>
-                      <td>{index + 1}</td>
+                      <td><button type="button" className="cue-reminder-trigger" disabled={!canSendAttention} title={attentionStatus} aria-label={`Remind viewers of Q${index + 1}`} onClick={() => sendAttention('cue', cueMark.id)}>{index + 1}</button></td>
 
                       <td className="qmark-table-time">
                         <MarkTimeEditor seconds={cueMark.elapsedSeconds} number={index + 1} onChange={seconds => updateCueMarkTime(cueMark.id, seconds)} />
@@ -260,7 +262,7 @@ export default function QMarkPage() {
                       <td className="qmark-delete-cell">
                         <button
                           className="danger-button qmark-delete-button"
-                          aria-label="Delete" title={`刪除 Q${index + 1}`}
+                          aria-label="Delete" title={`Delete Q${index + 1}`}
                           type="button"
                           onClick={() =>
                             deleteCueMark(

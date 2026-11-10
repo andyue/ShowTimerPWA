@@ -1,8 +1,8 @@
 export default function LanLanding() {
   return <main className="viewer-page">
-    <h1>ShowTimer 區網觀看</h1>
-    <h2>請掃描主控畫面的 QR Code</h2>
-    <p>這個網址已連到現場電腦。請由主控開啟廣播，再分享觀看連結。</p>
-    <p className="section-note">若要操作主控，請在執行區網服務的電腦，開啟終端機顯示的 127.0.0.1 本機網址。</p>
+    <h1>ShowTimer LAN viewer</h1>
+    <h2>Scan the controller QR code</h2>
+    <p>This address connects to the local host. Start broadcasting on the controller, then share its viewer link.</p>
+    <p className="section-note">To control the show, open the displayed 127.0.0.1 address on the computer running the LAN service.</p>
   </main>
 }

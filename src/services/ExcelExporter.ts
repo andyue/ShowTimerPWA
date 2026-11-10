@@ -187,7 +187,7 @@ export function importProjectFromCsv(
 
   if (segments.length === 0) {
     throw new Error(
-      'Excel 匯入失敗：找不到 Segments 資料。',
+      'Excel import failed: no Segments data found.',
     )
   }
 

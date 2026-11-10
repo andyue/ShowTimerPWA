@@ -9,5 +9,5 @@ export default function WallClock() {
     document.addEventListener('visibilitychange', tick)
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', tick) }
   }, [])
-  return <div className="wall-clock" aria-label="當下實際時間" title="裝置本地時間（24 小時制）">{formatClockTime(now)}</div>
+  return <div className="wall-clock" aria-label="Current local time" title="Device local time (24-hour clock)">{formatClockTime(now)}</div>
 }

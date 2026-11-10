@@ -146,3 +146,33 @@ test('OSC LAN mode accepts private-network controllers and ignores released Touc
     host.close()
   } finally { udp.close(); await bridge.close() }
 })
+
+test('transient reminders are host-only, limited, and never replay on join', async () => {
+  const service = createSyncServer({ port: 0 }); await once(service.http, 'listening')
+  try {
+    const port = service.http.address().port
+    const host = await connect(port)
+    let reply = next(host, 'created'); send(host, {type:'create'}); const room = await reply
+    assert.ok(room.capabilities.includes('attention-v1'))
+    const viewer = await connect(port)
+    reply = next(viewer,'snapshot'); send(viewer,{type:'join',id:room.id,token:room.viewerToken}); await reply
+    const reminder = {type:'attention',id:'one',target:'screen',sentAtMs:Date.now()}
+    reply=next(viewer,'attention-error');send(viewer,reminder);assert.match((await reply).error,/controller/)
+    const received=next(viewer,'attention');reply=next(host,'attention-sent');send(host,reminder)
+    assert.equal((await received).event.target,'screen');assert.equal((await reply).viewers,1)
+    reply=next(host,'attention-error');send(host,reminder);assert.match((await reply).error,/Duplicate/)
+    reply=next(host,'attention-error');send(host,{...reminder,id:'two'});assert.match((await reply).error,/wait/)
+    reply=next(host,'attention-error');send(host,{...reminder,id:'old',sentAtMs:0});assert.match((await reply).error,/expired/)
+    reply=next(host,'attention-error');send(host,{...reminder,id:'cue',target:'cue',cueMarkId:'missing'});assert.match((await reply).error,/not available/)
+    const mark={id:'stable-id',label:'Q1',segmentId:'act',segmentName:'Act',segmentOrder:0,segmentType:'act',elapsedSeconds:5,note:'cue',createdAt:new Date().toISOString()}
+    reply=next(host,'published');send(host,{type:'publish',snapshot:{...snapshot,cueMarks:[mark]}});await reply
+    await new Promise(resolve=>setTimeout(resolve,1510))
+    const cue=next(viewer,'attention');reply=next(host,'attention-sent')
+    send(host,{type:'attention',id:'valid-cue',target:'cue',cueMarkId:mark.id,sentAtMs:Date.now()})
+    assert.equal((await cue).event.cueMarkId,mark.id);await reply
+    const late=await connect(port);const events=[];late.on('message',raw=>events.push(JSON.parse(raw)))
+    reply=next(late,'snapshot');send(late,{type:'join',id:room.id,token:room.viewerToken});await reply
+    reply=next(late,'pong');send(late,{type:'ping'});await reply
+    assert.equal(events.some(event=>event.type==='attention'),false)
+  } finally { await service.close() }
+})

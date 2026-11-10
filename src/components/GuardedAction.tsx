@@ -42,7 +42,7 @@ function ActionControl({ children: label, className, disabled, onClick, confirma
     onClick()
   }
   const confirm = () => {
-    if (!disabled && window.confirm(confirmation ?? `確定執行「${label}」？`)) execute()
+    if (!disabled && window.confirm(confirmation ?? `Confirm ${label}?`)) execute()
   }
   function start(event: PointerEvent<HTMLButtonElement>) {
     if (disabled || drag.current || !event.isPrimary || event.button !== 0) return
@@ -66,10 +66,10 @@ function ActionControl({ children: label, className, disabled, onClick, confirma
   }
   if (!mobile) return <button type="button" className={className} disabled={disabled} onClick={confirm}>{label}</button>
   return <div ref={track} className={`guarded-slide ${className}`} data-disabled={disabled || undefined}>
-    <span className="guarded-slide-label">{label}<small>向右滑到底，放開執行</small></span>
+    <span className="guarded-slide-label">{label}<small>Slide fully right, then release</small></span>
     <button
       type="button" className="guarded-slide-thumb" aria-label={label}
-      aria-description="向右滑到底後放開執行；鍵盤或輔助操作可啟用確認視窗。"
+      aria-description="Slide fully right and release. Keyboard and assistive activation opens a confirmation dialog."
       disabled={disabled} style={{ transform: `translateX(${offset}px)` }}
       onPointerDown={start} onPointerMove={move} onPointerUp={finish}
       onPointerCancel={cancel} onLostPointerCapture={cancel}

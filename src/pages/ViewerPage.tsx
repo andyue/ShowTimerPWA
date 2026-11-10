@@ -1,3 +1,5 @@
+import { parseAttention, rememberAttention, SCREEN_REMINDER_MS, CUE_REMINDER_MS, type AttentionEvent } from '../services/Attention'
+import { broadcastMessage } from '../services/BroadcastMessages'
 import FitTime from '../components/FitTime'
 import WallClock from '../components/WallClock'
 import ViewerQMarks from '../components/ViewerQMarks'
@@ -6,8 +8,10 @@ import { projectSnapshot, validateSocketUrl, type BroadcastSnapshot } from '../s
 import { formatTimerSeconds } from '../services/TimerEngine'
 
 export default function ViewerPage() {
+  const [screenReminder, setScreenReminder] = useState<AttentionEvent | null>(null)
+  const [cueReminder, setCueReminder] = useState<AttentionEvent | null>(null)
   const [snapshot, setSnapshot] = useState<BroadcastSnapshot | null>(null)
-  const [status, setStatus] = useState('連線中…')
+  const [status, setStatus] = useState('Connecting…')
   const [clock, setClock] = useState(() => ({ offset: 0, now: Date.now() }))
   const [awake, setAwake] = useState(false)
   const [wakeStatus, setWakeStatus] = useState('')
@@ -18,12 +22,18 @@ export default function ViewerPage() {
     let retryDelay = 1000
     let reconnect: ReturnType<typeof setTimeout>
     let offset = 0
+    const received = new Set<string>()
+    let screenTimeout: ReturnType<typeof setTimeout>, cueTimeout: ReturnType<typeof setTimeout>
+    function clearReminders() {
+      clearTimeout(screenTimeout); clearTimeout(cueTimeout)
+      setScreenReminder(null); setCueReminder(null)
+    }
     function connect() {
       let url
       try { url = validateSocketUrl(params.get('service') || '') } catch {
-        setStatus('觀看連結無效，請重新掃描主控的 QR Code'); return
+        setStatus('Invalid viewer link. Scan the controller QR code again.'); return
       }
-      setStatus('連線中…'); ws = new WebSocket(url)
+      setStatus('Connecting…'); ws = new WebSocket(url)
       ws.onopen = () => {
         revision = -1; lastReceived = Date.now()
         ws.send(JSON.stringify({ type: 'join', id: params.get('watch'), token: params.get('token') }))
@@ -33,35 +43,48 @@ export default function ViewerPage() {
         if (stopped) return
         let data
         try { data = JSON.parse(e.data) } catch { return }
+        if (data.type === 'attention' && !document.hidden) {
+          const event = parseAttention(data.event, Date.now() + offset)
+          if (event && rememberAttention(received, event.id)) {
+            if (event.target === 'screen') {
+              clearTimeout(screenTimeout); setScreenReminder(event)
+              screenTimeout = setTimeout(() => setScreenReminder(null), SCREEN_REMINDER_MS)
+            } else {
+              clearTimeout(cueTimeout); setCueReminder(event)
+              cueTimeout = setTimeout(() => setCueReminder(null), CUE_REMINDER_MS)
+            }
+          }
+        }
         if (data.type === 'pong') offset = data.serverNow - (Date.now() + data.clientNow) / 2
         if (data.type === 'snapshot' && data.revision >= revision) {
           retryDelay = 1000; revision = data.revision; lastReceived = Date.now(); hostOnline = data.hostOnline
           setSnapshot(data.snapshot)
-          setStatus(!hostOnline ? '主控已離線，時間僅供參考' : data.snapshot ? '已同步 · 唯讀觀看' : '等待主控開始廣播')
+          setStatus(!hostOnline ? 'Controller offline. Time is approximate.' : data.snapshot ? 'Synced · read-only viewer' : 'Waiting for the controller to broadcast')
         }
         if (data.type === 'ended' || data.type === 'error') {
-          terminal = true; setStatus(data.error || '廣播已結束'); setSnapshot(null); ws.close()
+          terminal = true; setStatus(broadcastMessage(data.error)); setSnapshot(null); ws.close()
         }
       }
       ws.onerror = () => ws.close()
       ws.onclose = () => {
-        if (!stopped && !terminal) { setStatus('連線中斷，時間僅供參考 · 正在重連'); reconnect = setTimeout(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, 15000) }
+        clearReminders()
+        if (!stopped && !terminal) { setStatus('Disconnected · approximate time · reconnecting'); reconnect = setTimeout(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, 15000) }
       }
     }
     connect()
     const tick = setInterval(() => {
       setClock({ offset, now: Date.now() })
       if (!terminal && lastReceived && Date.now() - lastReceived > 10000) {
-        setStatus('同步中斷，時間僅供參考')
+        setStatus('Sync lost. Time is approximate.')
       }
     }, 250)
     const heartbeat = setInterval(() => {
       if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ping', clientNow: Date.now() }))
       if (!terminal && lastReceived && Date.now() - lastReceived > 15000 && hostOnline) ws?.close()
     }, 3000)
-    const visible = () => { if (!document.hidden && ws?.readyState === WebSocket.OPEN) ws.close() }
+    const visible = () => { clearReminders(); if (!document.hidden && ws?.readyState === WebSocket.OPEN) ws.close() }
     document.addEventListener('visibilitychange', visible)
-    return () => { stopped = true; clearInterval(tick); clearInterval(heartbeat); clearTimeout(reconnect); ws?.close(); document.removeEventListener('visibilitychange', visible) }
+    return () => { stopped = true; clearReminders(); clearInterval(tick); clearInterval(heartbeat); clearTimeout(reconnect); ws?.close(); document.removeEventListener('visibilitychange', visible) }
   }, [])
   useEffect(() => {
     if (!awake) return
@@ -73,9 +96,9 @@ export default function ViewerPage() {
         if (!navigator.wakeLock) throw new Error('unsupported')
         const acquired = await navigator.wakeLock.request('screen')
         if (stopped) { await acquired.release(); return }
-        lock = acquired; setWakeStatus('螢幕保持亮起')
-        lock.addEventListener('release', () => { if (!stopped) setWakeStatus('螢幕保持亮起已解除') })
-      } catch { setWakeStatus('系統未允許保持亮起，請調整裝置自動鎖定設定') }
+        lock = acquired; setWakeStatus('Screen will stay awake')
+        lock.addEventListener('release', () => { if (!stopped) setWakeStatus('Screen wake lock released') })
+      } catch { setWakeStatus('Screen wake lock unavailable. Adjust your device auto-lock settings.') }
     }
     void request()
     document.addEventListener('visibilitychange', request)
@@ -85,21 +108,21 @@ export default function ViewerPage() {
   const elapsed = (times?.elapsedMs ?? 0) / 1000
   const display = snapshot?.segment?.type === 'intermission' ? Math.max(0, snapshot.segment.plannedSeconds - Math.floor(elapsed)) : elapsed
   return <main className={`viewer-page viewer-with-marks ${snapshot?.status === 'paused' ? 'viewer-paused' : ''}`}>
+    {screenReminder && <div key={screenReminder.id} className="viewer-screen-reminder" aria-hidden="true" />}
     <section className="viewer-timer-panel">
-    <p className={status.startsWith('已同步') ? 'viewer-connected' : 'viewer-warning'} role="status">{status}</p>
+    <p className={status.startsWith('Synced') ? 'viewer-connected' : 'viewer-warning'} role="status">{status}</p>
     <h1>{snapshot?.projectName || 'ShowTimer'}</h1>
-    <h2>{snapshot?.status === 'finished' ? '演出已完成' : snapshot?.segment?.name || '等待廣播'}</h2>
+    <h2>{snapshot?.status === 'finished' ? 'Show completed' : snapshot?.segment?.name || 'Waiting for broadcast'}</h2>
     <WallClock />
     <div className="viewer-time"><FitTime>{formatTimerSeconds(display)}</FitTime></div>
-    {snapshot?.status === 'paused' && <div className="pause-banner"><strong>演出暫停中</strong><span>本次暫停 {formatTimerSeconds((times?.currentPauseMs ?? 0) / 1000)}</span></div>}
-    {snapshot?.status === 'idle' && <p>準備開始</p>}
-    {snapshot && <p>累計暫停 {formatTimerSeconds((times?.pausedMs ?? 0) / 1000)}</p>}
-    {snapshot?.nextSegmentName && snapshot.status !== 'finished' && <p>下一段：{snapshot.nextSegmentName}</p>}
-    <div className="viewer-controls"><button disabled={!window.isSecureContext} onClick={() => { setAwake(!awake); setWakeStatus('') }}>{awake ? '允許螢幕休眠' : '保持螢幕亮起'}</button>
-      <button onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen?.().catch(() => {}) }}>全螢幕</button></div>
-    {!window.isSecureContext && <p className="section-note">區網觀看模式：請在裝置設定中關閉自動鎖定，並保持此頁在前景。</p>}
-    <small>{wakeStatus}</small>
+    {snapshot?.status === 'paused' && <div className="pause-banner"><strong>Show paused</strong><span>Current pause {formatTimerSeconds((times?.currentPauseMs ?? 0) / 1000)}</span></div>}
+    {snapshot?.status === 'idle' && <p>Ready</p>}
+    {snapshot && <p>Total paused {formatTimerSeconds((times?.pausedMs ?? 0) / 1000)}</p>}
+    {snapshot?.nextSegmentName && snapshot.status !== 'finished' && <p>Next: {snapshot.nextSegmentName}</p>}
+    <div className="viewer-controls"><button disabled={!window.isSecureContext} onClick={() => { setAwake(!awake); setWakeStatus('') }}>{awake ? 'Allow screen sleep' : 'Keep screen awake'}</button>
+      <button onClick={() => { if (document.fullscreenElement) void document.exitFullscreen(); else void document.documentElement.requestFullscreen?.().catch(() => {}) }}>Fullscreen</button></div>
+    {wakeStatus && <small>{wakeStatus}</small>}
     </section>
-    <ViewerQMarks marks={snapshot?.cueMarks} tags={snapshot?.cueTags} scope={`viewer:${new URLSearchParams(location.hash.slice(1)).get("watch")}`} />
+    <ViewerQMarks reminder={cueReminder} marks={snapshot?.cueMarks} tags={snapshot?.cueTags} scope={`viewer:${new URLSearchParams(location.hash.slice(1)).get("watch")}`} />
   </main>
 }

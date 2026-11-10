@@ -12,7 +12,7 @@ export interface SubTimerState {
 export function parseSubTimer(value: unknown): SubTimerState | undefined {
   if (value === undefined) return undefined
   const state = value as SubTimerState
-  if (!state || typeof state.reset !== 'boolean' || !Array.isArray(state.records)) throw new Error('Sub timer 資料格式不正確')
+  if (!state || typeof state.reset !== 'boolean' || !Array.isArray(state.records)) throw new Error('Invalid Sub Timer data')
   const ids = new Set<string>()
   state.records.forEach((record, index) => {
     if (!record || typeof record.id !== 'string' || ids.has(record.id) ||
@@ -20,7 +20,7 @@ export function parseSubTimer(value: unknown): SubTimerState | undefined {
       !Number.isFinite(record.startedAtMs) || record.startedAtMs < 0 ||
       (record.endedAtMs !== null && (!Number.isFinite(record.endedAtMs) || record.endedAtMs < record.startedAtMs)) ||
       (record.endedAtMs === null && (index !== state.records.length - 1 || state.reset))) {
-      throw new Error('Sub timer 紀錄格式不正確')
+      throw new Error('Invalid Sub Timer record')
     }
     ids.add(record.id)
   })

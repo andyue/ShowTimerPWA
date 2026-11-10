@@ -49,7 +49,7 @@ export default function ToolsPage() {
     }
 
     const confirmed = window.confirm(
-      '匯入 JSON 會取代目前的 Show File。確定要繼續嗎？',
+      'Importing JSON will replace the current Show File. Continue?',
     )
 
     if (!confirmed) {
@@ -60,13 +60,13 @@ export default function ToolsPage() {
       await importJson(file)
 
       setImportMessage(
-        'Show File 匯入成功。',
+        'Show File imported.',
       )
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'Show File 匯入失敗。'
+          : 'Show File import failed.'
 
       setImportMessage(message)
 
@@ -86,7 +86,7 @@ export default function ToolsPage() {
     }
 
     const confirmed = window.confirm(
-      '匯入 Excel CSV 會取代目前的 Show File。確定要繼續嗎？',
+      'Importing Excel CSV will replace the current Show File. Continue?',
     )
 
     if (!confirmed) {
@@ -97,13 +97,13 @@ export default function ToolsPage() {
       await importExcel(file)
 
       setImportMessage(
-        'Excel CSV 匯入成功。',
+        'Excel CSV imported.',
       )
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'Excel CSV 匯入失敗。'
+          : 'Excel CSV import failed.'
 
       setImportMessage(message)
 
@@ -113,7 +113,7 @@ export default function ToolsPage() {
 
   function handleResetShow() {
     const confirmed = window.confirm(
-      '確定要重置本輪 Show 嗎？Segments 和 Q Marks 會保留，只會清除 Results 並重置計時。',
+      'Reset this show run? Segments and Q Marks will be kept. Results and timers will be reset.',
     )
 
     if (confirmed) {
@@ -123,7 +123,7 @@ export default function ToolsPage() {
 
   function handleResetProject() {
     const confirmed = window.confirm(
-      '確定要清除目前的 Show File 嗎？',
+      'Clear the current Show File?',
     )
 
     if (confirmed) {
@@ -184,7 +184,7 @@ export default function ToolsPage() {
 
           {project.segments.length === 0 ? (
             <p className="empty-message">
-              目前還沒有 Segment。
+              No segments yet.
             </p>
           ) : (
             <div className="segment-list">
@@ -356,7 +356,7 @@ export default function ToolsPage() {
           </div>
 
           <p className="section-note">
-            Excel 匯入 / 匯出目前支援 CSV，可直接用 Excel 開啟。
+            Excel import and export use CSV files, which can be opened in Excel.
           </p>
 
           {importMessage && (
@@ -379,7 +379,7 @@ export default function ToolsPage() {
             </button>
 
             <p className="section-note">
-              保留 Show File Name、Segments 和 Q Marks，只清除本輪 Results 並重置計時。
+              Keep the show name, segments and Q Marks. Clear results and reset timers for this run.
             </p>
           </div>
 
@@ -393,21 +393,21 @@ export default function ToolsPage() {
         </section>
         <ConnectionsPanel />
         <section className="tool-section resource-links">
-          <h2>下載與使用說明</h2>
-          <a href="https://github.com/andyue/ShowTimerPWA" target="_blank" rel="noopener noreferrer">GitHub 專案與配套程式 ↗</a>
-          <p className="section-note">區網啟動程式、OSC 橋接與設定文件都在專案裡。下載整份專案可使用 GitHub 的 Code → Download ZIP。</p>
-          <a href="https://github.com/andyue/ShowTimerPWA/blob/main/docs/lan.md" target="_blank" rel="noopener noreferrer">區網廣播操作步驟 ↗</a>
+          <h2>Downloads and help</h2>
+          <a href="https://github.com/andyue/ShowTimerPWA" target="_blank" rel="noopener noreferrer">GitHub project and companion tools ↗</a>
+          <p className="section-note">LAN launchers, the OSC bridge and setup guides are in the project. On GitHub, choose Code → Download ZIP.</p>
+          <a href="https://github.com/andyue/ShowTimerPWA/blob/main/docs/lan.md" target="_blank" rel="noopener noreferrer">LAN broadcast guide ↗</a>
           <div className="button-row">
-            <a href={`https://andyue.github.io/ShowTimerPWA/downloads/Update-ShowTimer-Windows.cmd`} download>下載 Windows 更新工具</a>
-            <a href={`https://andyue.github.io/ShowTimerPWA/downloads/Update-ShowTimer-Mac.command`} download>下載 Mac 更新工具</a>
+            <a href={`https://andyue.github.io/ShowTimerPWA/downloads/Update-ShowTimer-Windows.cmd`} download>Download Windows updater</a>
+            <a href={`https://andyue.github.io/ShowTimerPWA/downloads/Update-ShowTimer-Mac.command`} download>Download Mac updater</a>
           </div>
           <div className="button-row">
-            <a href="https://andyue.github.io/ShowTimerPWA/downloads/Update-OSC-Windows.cmd" download>下載 Windows OSC 安裝／更新工具</a>
-            <a href="https://andyue.github.io/ShowTimerPWA/downloads/Update-OSC-Mac.command" download>下載 Mac OSC 安裝／更新工具</a>
+            <a href="https://andyue.github.io/ShowTimerPWA/downloads/Update-OSC-Windows.cmd" download>Download Windows OSC installer/updater</a>
+            <a href="https://andyue.github.io/ShowTimerPWA/downloads/Update-OSC-Mac.command" download>Download Mac OSC installer/updater</a>
           </div>
-          <p className="section-note">先備份 Show File 並關閉區網主機與 OSC，再執行更新工具。會安裝最近通過測試與部署的版本並啟動，舊版保留。Mac 首次執行方式請看區網說明。</p>
-          <a href="https://nodejs.org/download/release/latest-v24.x/" target="_blank" rel="noopener noreferrer">Node.js 24 官方下載 ↗</a>
-          <p className="section-note">現場電腦需先安裝 Node.js 24。Windows 一般選 x64.msi；Mac 選 .pkg 安裝檔。下載這些檔案需要網際網路。</p>
+          <p className="section-note">Back up your Show File and stop the LAN host and OSC before updating. The updater installs the latest tested release and keeps the old version. See the LAN guide for first-time Mac setup.</p>
+          <a href="https://nodejs.org/download/release/latest-v24.x/" target="_blank" rel="noopener noreferrer">Download Node.js 24 ↗</a>
+          <p className="section-note">Install Node.js 24 on the host computer. Usually choose x64.msi for Windows or .pkg for Mac. Downloads require internet access.</p>
         </section>
       </div>
     </section>

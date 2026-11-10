@@ -61,7 +61,7 @@ export async function importProjectFromJsonFile(
     parsed = JSON.parse(text)
   } catch {
     throw new Error(
-      '這個檔案不是有效的 JSON。',
+      'This file is not valid JSON.',
     )
   }
 
@@ -73,7 +73,7 @@ export function validateShowProject(
 ): ShowProject {
   if (!isRecord(value)) {
     throw new Error(
-      'Show File 的資料格式不正確。',
+      'Invalid Show File data.',
     )
   }
 
@@ -81,7 +81,7 @@ export function validateShowProject(
     value.format !== SHOWTIMER_FORMAT_NAME
   ) {
     throw new Error(
-      `無法辨識這個檔案。格式必須是 "${SHOWTIMER_FORMAT_NAME}"。`,
+      `Unrecognized file. Expected format "${SHOWTIMER_FORMAT_NAME}".`,
     )
   }
 
@@ -89,7 +89,7 @@ export function validateShowProject(
     typeof value.version !== 'number'
   ) {
     throw new Error(
-      'Show File 缺少有效的版本號。',
+      'Show File is missing a valid version.',
     )
   }
 
@@ -98,7 +98,7 @@ export function validateShowProject(
     SHOWTIMER_FORMAT_VERSION
   ) {
     throw new Error(
-      `這個 Show File 是較新的版本 ${value.version}，目前程式只支援版本 ${SHOWTIMER_FORMAT_VERSION}。`,
+      `This Show File uses version ${value.version}. This app supports up to version ${SHOWTIMER_FORMAT_VERSION}.`,
     )
   }
 
@@ -109,25 +109,25 @@ export function validateShowProject(
     typeof value.updatedAt !== 'string'
   ) {
     throw new Error(
-      'Show File 的基本資料不完整。',
+      'Show File metadata is incomplete.',
     )
   }
 
   if (!Array.isArray(value.segments)) {
     throw new Error(
-      'Show File 缺少 Segments 資料。',
+      'Show File is missing Segments.',
     )
   }
 
   if (!Array.isArray(value.results)) {
     throw new Error(
-      'Show File 缺少 Results 資料。',
+      'Show File is missing Results.',
     )
   }
 
   if (!Array.isArray(value.cueMarks)) {
     throw new Error(
-      'Show File 缺少 Q Marks 資料。',
+      'Show File is missing Q Marks.',
     )
   }
 
@@ -157,9 +157,9 @@ export function validateShowProject(
           !['act', 'intermission'].includes(String(result.segmentType)) ||
           !Number.isFinite(result.elapsedSeconds) || Number(result.elapsedSeconds) < 0 ||
           !Number.isFinite(result.plannedSeconds) || Number(result.plannedSeconds) < 0 ||
-          typeof result.startedAt !== 'string' || typeof result.endedAt !== 'string') throw new Error('完成紀錄格式不正確')
+          typeof result.startedAt !== 'string' || typeof result.endedAt !== 'string') throw new Error('Invalid completed result')
         for (const field of ['pausedSeconds', 'totalSeconds']) {
-          if (result[field] !== undefined && (!Number.isFinite(result[field]) || Number(result[field]) < 0)) throw new Error('完成紀錄時間不正確')
+          if (result[field] !== undefined && (!Number.isFinite(result[field]) || Number(result[field]) < 0)) throw new Error('Invalid completed result time')
         }
         return { ...result, ...(result.pauses === undefined ? {} : { pauses: parsePauseRecords(JSON.stringify(result.pauses)) }) } as unknown as SegmentResult
       }),
@@ -175,7 +175,7 @@ function validateSegment(
 ): ShowSegment {
   if (!isRecord(value)) {
     throw new Error(
-      `第 ${index + 1} 個 Segment 格式不正確。`,
+      `Segment ${index + 1} has an invalid format.`,
     )
   }
 
@@ -187,7 +187,7 @@ function validateSegment(
       'number'
   ) {
     throw new Error(
-      `第 ${index + 1} 個 Segment 資料不完整。`,
+      `Segment ${index + 1} is incomplete.`,
     )
   }
 
@@ -196,7 +196,7 @@ function validateSegment(
     value.type !== 'intermission'
   ) {
     throw new Error(
-      `第 ${index + 1} 個 Segment Type 不正確。`,
+      `Segment ${index + 1} has an invalid type.`,
     )
   }
 
@@ -218,7 +218,7 @@ function validateCueMark(
 ): CueMark {
   if (!isRecord(value)) {
     throw new Error(
-      `第 ${index + 1} 個 Q Mark 格式不正確。`,
+      `Q Mark ${index + 1} has an invalid format.`,
     )
   }
 
@@ -232,7 +232,7 @@ function validateCueMark(
     typeof value.createdAt !== 'string'
   ) {
     throw new Error(
-      `第 ${index + 1} 個 Q Mark 資料不完整。`,
+      `Q Mark ${index + 1} is incomplete.`,
     )
   }
 
@@ -241,7 +241,7 @@ function validateCueMark(
     value.segmentType !== 'intermission'
   ) {
     throw new Error(
-      `第 ${index + 1} 個 Q Mark Segment Type 不正確。`,
+      `Q Mark ${index + 1} has an invalid segment type.`,
     )
   }
 

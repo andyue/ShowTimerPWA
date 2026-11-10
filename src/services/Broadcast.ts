@@ -62,15 +62,20 @@ export function validateSocketUrl(raw: string, localOnly = false, pageUrl = type
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
   if (url.username || url.password || url.hash || !['wss:', 'ws:'].includes(url.protocol) ||
     (url.protocol === 'ws:' && !local && !sameLanOrigin) || (localOnly && !local)) {
-    throw new Error(localOnly ? 'OSC 橋接需使用本機 ws://127.0.0.1:8788 或本機 WSS 位址' : '雲端同步需使用 wss://；區網觀看請掃描現場主控的 QR Code')
+    throw new Error(localOnly ? 'Use a local OSC bridge at ws://127.0.0.1:8788 or a local WSS address' : 'Cloud sync requires wss://. For LAN viewing, scan the controller QR code')
   }
   return url.toString()
 }
 
 export function viewerUrl(room: BroadcastRoom) {
   const url = new URL(room.viewerBaseUrl || location.href)
-  const service = room.viewerBaseUrl ? new URL(room.viewerBaseUrl) : new URL(room.url)
-  if (room.viewerBaseUrl) service.protocol = service.protocol === 'https:' ? 'wss:' : 'ws:'
+  let service = new URL(room.url)
+  // A local LAN host must advertise its viewer-facing LAN address.
+  // A public viewer page must retain the separate cloud sync endpoint.
+  if (room.viewerBaseUrl && service.protocol === 'ws:' && ['127.0.0.1', 'localhost', '[::1]'].includes(service.hostname)) {
+    service = new URL(room.viewerBaseUrl)
+    service.protocol = service.protocol === 'https:' ? 'wss:' : 'ws:'
+  }
   url.hash = new URLSearchParams({ watch: room.id, token: room.viewerToken, service: service.toString() }).toString()
   return url.toString()
 }

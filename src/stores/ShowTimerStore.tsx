@@ -582,11 +582,11 @@ export function ShowTimerProvider({
           label: `M${getNextCueMarkNumber(current.cueMarks)}`,
           segmentId: segment?.id ?? '',
           segmentOrder: segment?.order ?? 0,
-          segmentName: segment?.name ?? '未指定段落',
+          segmentName: segment?.name ?? 'No segment',
           segmentType: segment?.type ?? 'act',
           elapsedSeconds,
           tagIds: selectedTagIds,
-          note: `Sub timer 時長 ${formatTimerSeconds(duration)}`,
+          note: `Sub Timer duration ${formatTimerSeconds(duration)}`,
           createdAt: new Date(now).toISOString(),
         }),
       }

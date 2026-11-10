@@ -13,8 +13,8 @@ export default function MarkTimeEditor({ seconds, number, onChange }: { seconds:
     if (draft !== formatTimerSeconds(seconds)) onChange(value)
     setEditing(false); setInvalid(false)
   }
-  return editing ? <><input className="mark-time-input" aria-label={`Q${number} 時間`} aria-invalid={invalid} title={invalid ? '請輸入 HH:MM:SS，分秒須為 00–59' : 'HH:MM:SS；Enter 儲存，Escape 取消'} value={draft}
+  return editing ? <><input className="mark-time-input" aria-label={`Q${number} time`} aria-invalid={invalid} title={invalid ? 'Enter HH:MM:SS. Minutes and seconds must be 00–59.' : 'HH:MM:SS; Enter to save, Escape to cancel'} value={draft}
     autoFocus onFocus={e => e.target.select()} onChange={e => { setDraft(e.target.value); setInvalid(false) }}
-    onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setEditing(false); setInvalid(false) } }} />{invalid && <span className="mark-time-error" role="alert">請用 HH:MM:SS</span>}</>
-    : <button type="button" className="mark-time-button" aria-label={`修改 Q${number} 時間`} title="點擊修改時間" onClick={() => { setDraft(formatTimerSeconds(seconds)); setEditing(true) }}><FitTime>{formatTimerSeconds(seconds)}</FitTime></button>
+    onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setEditing(false); setInvalid(false) } }} />{invalid && <span className="mark-time-error" role="alert">Use HH:MM:SS</span>}</>
+    : <button type="button" className="mark-time-button" aria-label={`Edit Q${number} time`} title="Click to edit time" onClick={() => { setDraft(formatTimerSeconds(seconds)); setEditing(true) }}><FitTime>{formatTimerSeconds(seconds)}</FitTime></button>
 }

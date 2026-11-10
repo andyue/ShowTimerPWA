@@ -27,7 +27,7 @@ export function SubTimerControl() {
     <output className="sub-timer-time"><FitTime>{seconds < 3600 ? formatted.slice(3) : formatted}</FitTime></output>
     <button type="button" className="sub-timer-toggle" onClick={toggleSubTimer}>{running ? 'Stop' : 'Start'}</button>
     <button type="button" className="sub-timer-reset" onClick={() => {
-      if (!running || window.confirm('停止並保存本次 Sub timer 紀錄，再歸零？')) resetSubTimer()
+      if (!running || window.confirm('Stop and save the current Sub Timer record, then reset?')) resetSubTimer()
     }}>Reset</button>
   </section>
 }
@@ -37,11 +37,11 @@ export function SubTimerHistory() {
   const records = project.subTimer?.records ?? []
   if (!records.length) return null
   return <details className="pause-history sub-timer-history">
-    <summary>技術執行紀錄（{records.length} 次）</summary>
+    <summary>Sub Timer record ({records.length})</summary>
     {records.map((record, index) => <div className="pause-record" key={record.id}>
-      <span>#{index + 1} · {record.segmentName || '未指定段落'} · {formatClockTime(record.startedAtMs)} → {record.endedAtMs === null ? '計時中' : formatClockTime(record.endedAtMs)}</span>
+      <span>#{index + 1} · {record.segmentName || 'No segment'} · {formatClockTime(record.startedAtMs)} → {record.endedAtMs === null ? 'Running' : formatClockTime(record.endedAtMs)}</span>
       <strong>{formatTimerSeconds(Math.max(0, ((record.endedAtMs ?? now) - record.startedAtMs) / 1000))}</strong>
-      <label className="field"><span>技術執行備註（選填，可事後補）</span>
+      <label className="field"><span>Sub Timer note (optional; editable later)</span>
         <input value={record.note} onChange={event => updateSubTimerNote(record.id, event.target.value)} />
       </label>
     </div>)}
