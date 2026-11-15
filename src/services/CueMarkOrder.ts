@@ -25,12 +25,12 @@ export function insertCueMark(marks: CueMark[], added: CueMark): CueMark[] {
   return numberRows(ordered)
 }
 
-export function moveCueMark(marks: CueMark[], id: string, direction: 'up' | 'down'): CueMark[] {
+export function moveCueMark(marks: CueMark[], id: string, direction: string): CueMark[] {
   // Freeze legacy placeholder notes before changing their row positions.
   const ordered = numberRows(sortCueMarks(marks))
   const index = ordered.findIndex(mark => mark.id === id)
-  const target = index + (direction === 'up' ? -1 : 1)
+  const target = direction === 'up' || direction === 'down' ? index + (direction === 'up' ? -1 : 1) : ordered.findIndex(mark => mark.id === direction)
   if (index < 0 || target < 0 || target >= ordered.length) return marks
-  ;[ordered[index], ordered[target]] = [ordered[target], ordered[index]]
+  ordered.splice(target, 0, ordered.splice(index, 1)[0])
   return numberRows(ordered)
 }

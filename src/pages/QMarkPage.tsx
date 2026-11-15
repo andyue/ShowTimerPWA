@@ -206,6 +206,7 @@ export default function QMarkPage() {
                   (cueMark, index) => matchesTags(cueMark, effectiveFilter, tags) && (
                     <tr
                       key={cueMark.id}
+                      data-cue-id={cueMark.id}
                       style={{ backgroundImage: cueRowBackground(cueMark, tags) }}
                       ref={
                         cueMark.id ===
@@ -216,8 +217,24 @@ export default function QMarkPage() {
                     >
                       <td className="qmark-order-cell">
                         <div className="qmark-order-controls">
-                          <button type="button" aria-label={`Move up Q${index + 1}`} disabled={index === 0} onClick={() => moveCueMark(cueMark.id, 'up')}>↑</button>
-                          <button type="button" aria-label={`Move down Q${index + 1}`} disabled={index === sortedCueMarks.length - 1} onClick={() => moveCueMark(cueMark.id, 'down')}>↓</button>
+                          <button type="button" className="cue-drag-handle" aria-label={`Drag Q${index + 1}`} title="Drag to reorder; use arrow keys when focused"
+                            onKeyDown={event => { if (event.key === 'ArrowUp' || event.key === 'ArrowDown') { event.preventDefault(); moveCueMark(cueMark.id, event.key === 'ArrowUp' ? 'up' : 'down') } }}
+                            onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); event.currentTarget.dataset.dragging = 'true' }}
+                            onPointerMove={event => {
+                              if (event.currentTarget.dataset.dragging !== 'true') return
+                              const row = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-cue-id]')
+                              document.querySelectorAll('.cue-drop-target').forEach(el => el.classList.remove('cue-drop-target'))
+                              row?.classList.add('cue-drop-target')
+                              const frame = event.currentTarget.closest('.qmark-table-frame')
+                              if (frame) { const rect = frame.getBoundingClientRect(); if (event.clientY > rect.bottom - 40) frame.scrollTop += 15; if (event.clientY < rect.top + 40) frame.scrollTop -= 15 }
+                            }}
+                            onPointerUp={event => {
+                              delete event.currentTarget.dataset.dragging
+                              const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-cue-id]')?.dataset.cueId
+                              document.querySelectorAll('.cue-drop-target').forEach(el => el.classList.remove('cue-drop-target'))
+                              if (target && target !== cueMark.id) moveCueMark(cueMark.id, target)
+                            }}
+                            onPointerCancel={event => { delete event.currentTarget.dataset.dragging; document.querySelectorAll('.cue-drop-target').forEach(el => el.classList.remove('cue-drop-target')) }}>=</button>
                         </div>
                       </td>
                       <td><button type="button" className="cue-reminder-trigger" disabled={!canSendAttention} title={attentionStatus} aria-label={`Remind viewers of Q${index + 1}`} onClick={() => sendAttention('cue', cueMark.id)}>{index + 1}</button></td>

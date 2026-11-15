@@ -5,7 +5,9 @@ import type { ShowProject } from '../models/ShowProject'
 import type { TimerRunState } from '../stores/useShowTimerStore'
 import { getPausedMs } from './TimerEngine'
 
+import type { PersistentAttention } from './PersistentAttention'
 export interface BroadcastSnapshot {
+  attention?: PersistentAttention | null
   cueTags?: CueTag[]
   cueMarks?: CueMark[]
   projectName: string

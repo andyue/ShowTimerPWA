@@ -611,7 +611,7 @@ export function ShowTimerProvider({
     }))
   }
 
-  function moveCueMark(id: string, direction: 'up' | 'down') {
+  function moveCueMark(id: string, direction: string) {
     updateProject(currentProject => ({
       ...currentProject,
       cueMarks: reorderCueMark(currentProject.cueMarks, id, direction),

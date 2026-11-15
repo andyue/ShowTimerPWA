@@ -1,5 +1,6 @@
 import { parseAttention, rememberAttention, SCREEN_REMINDER_MS, CUE_REMINDER_MS, type AttentionEvent } from '../services/Attention'
 import { broadcastMessage } from '../services/BroadcastMessages'
+import AttentionBorder from '../components/AttentionBorder'
 import FitTime from '../components/FitTime'
 import WallClock from '../components/WallClock'
 import ViewerQMarks from '../components/ViewerQMarks'
@@ -107,8 +108,15 @@ export default function ViewerPage() {
   const times = snapshot ? projectSnapshot(snapshot, clock.now + clock.offset) : null
   const elapsed = (times?.elapsedMs ?? 0) / 1000
   const display = snapshot?.segment?.type === 'intermission' ? Math.max(0, snapshot.segment.plannedSeconds - Math.floor(elapsed)) : elapsed
+  const persistent = status.startsWith('Synced') && snapshot && clock.now + clock.offset - snapshot.capturedAtMs < 10000 ? snapshot.attention : null
+  const attention = persistent && (persistent.phase === 'active' || (persistent.until ?? 0) > clock.now + clock.offset) ? persistent : null
+  if (attention?.cueMarkId) return <main className="viewer-note-only">
+    <AttentionBorder attention={attention} />
+    <div className="viewer-cue-note">{attention.note}</div>
+  </main>
   return <main className={`viewer-page viewer-with-marks ${snapshot?.status === 'paused' ? 'viewer-paused' : ''}`}>
     {screenReminder && <div key={screenReminder.id} className="viewer-screen-reminder" aria-hidden="true" />}
+    <AttentionBorder attention={attention ?? null} />
     <section className="viewer-timer-panel">
     <p className={status.startsWith('Synced') ? 'viewer-connected' : 'viewer-warning'} role="status">{status}</p>
     <h1>{snapshot?.projectName || 'ShowTimer'}</h1>

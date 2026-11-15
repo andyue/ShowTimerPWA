@@ -168,7 +168,7 @@ for (const mobile of [false, true]) {
     await expect(rows.nth(0).locator('textarea')).toHaveValue('Q1')
     await expect(rows.nth(1).locator('textarea')).toHaveValue('old-10')
     await expect(rows.nth(2).locator('textarea')).toHaveValue('old-60')
-    await layout.getByRole('button', { name: 'Move down Q1', exact: true }).click()
+    await layout.getByRole('button', { name: 'Drag Q1', exact: true }).press('ArrowDown')
     await expect(rows.nth(0).locator('textarea')).toHaveValue('old-10')
     await expect(rows.nth(1).locator('textarea')).toHaveValue('Q1')
     if (mobile) {
@@ -181,8 +181,10 @@ for (const mobile of [false, true]) {
     if (mobile) await page.getByRole('button', { name: 'Q Marks', exact: true }).click()
     await expect(rows.nth(0).locator('textarea')).toHaveValue('old-10')
     await expect(rows.nth(1).locator('textarea')).toHaveValue('Q1')
-    await expect(layout.getByRole('button', { name: 'Move up Q1', exact: true })).toBeDisabled()
-    await expect(layout.getByRole('button', { name: 'Move down Q3', exact: true })).toBeDisabled()
+    await layout.getByRole('button', { name: 'Drag Q1', exact: true }).press('ArrowUp')
+    await expect(rows.nth(0).locator('textarea')).toHaveValue('old-10')
+    await layout.getByRole('button', { name: 'Drag Q3', exact: true }).press('ArrowDown')
+    await expect(rows.nth(2).locator('textarea')).toHaveValue('old-60')
   })
 }
 
@@ -251,7 +253,7 @@ for (const mobile of [false, true]) {
     const note = row.locator('textarea')
     const initial = (await row.boundingBox())!.height
     expect(initial).toBeLessThanOrEqual(50)
-    await expect(row.locator('td').nth(0).getByRole('button', { name: 'Move up Q1' })).toBeVisible()
+    await expect(row.locator('td').nth(0).getByRole('button', { name: 'Drag Q1' })).toBeVisible()
     await expect(row.locator('td').nth(1)).toHaveText('1')
     await note.fill('燈光 GO\n音樂淡入\n第三行\n第四行')
     await expect.poll(async () => (await row.boundingBox())!.height).toBeGreaterThan(initial)

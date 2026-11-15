@@ -1,9 +1,12 @@
-import { ATTENTION_CAPABILITY, ATTENTION_COOLDOWN_MS, type AttentionTarget } from '../services/Attention'
+import { ATTENTION_CAPABILITY, type AttentionTarget } from '../services/Attention'
 import { broadcastMessage } from '../services/BroadcastMessages'
 import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react'
 import { useShowTimerStore } from './useShowTimerStore'
 import { ConnectionsContext } from './ConnectionsContext'
 import { makeSnapshot, validateSocketUrl, type BroadcastRoom } from '../services/Broadcast'
+
+import AttentionBorder from '../components/AttentionBorder'
+import { toggleAttention, type PersistentAttention } from '../services/PersistentAttention'
 
 function savedRoom(): BroadcastRoom | null {
   try {
@@ -22,9 +25,12 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
   const [broadcastStatus, setBroadcastStatus] = useState('Not broadcasting')
   const [supportsAttention, setSupportsAttention] = useState(false)
   const [attentionStatus, setAttentionStatus] = useState('Start a broadcast to send reminders.')
-  const lastAttentionAt = useRef(0)
-  const pendingAttention = useRef('')
-  const attentionTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [attention, setAttention] = useState<PersistentAttention | null>(null)
+  useEffect(() => {
+    if (attention?.phase !== 'complete') return
+    const timer = setTimeout(() => setAttention(null), Math.max(0, attention.until! - Date.now() - offset.current))
+    return () => clearTimeout(timer)
+  }, [attention])
   const [osc, setOsc] = useState<{ url: string; token: string } | null>(null)
   const [oscStatus, setOscStatus] = useState('Disconnected')
   const broadcastSocket = useRef<WebSocket | null>(null)
@@ -33,7 +39,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
   const joined = useRef(false)
   const publish = useEffectEvent(() => {
     if (joined.current && broadcastSocket.current?.readyState === WebSocket.OPEN) {
-      const message = JSON.stringify({ type: 'publish', snapshot: makeSnapshot(store.project, store.timerRun, Date.now(), offset.current) })
+      const message = JSON.stringify({ type: 'publish', snapshot: { ...makeSnapshot(store.project, store.timerRun, Date.now(), offset.current), attention } })
       if (new TextEncoder().encode(message).byteLength > 8 * 1024 * 1024) {
         setBroadcastStatus('Broadcast exceeds 8 MB. Export a backup and shorten Q Mark notes. Local timers remain available.')
         return
@@ -43,7 +49,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
   })
   // nowMs is just a local display tick; publish transitions immediately and heartbeat every 3s.
   const runKey = JSON.stringify({ ...store.timerRun, nowMs: 0 })
-  useEffect(() => { publish() }, [runKey, store.project])
+  useEffect(() => { publish() }, [runKey, store.project, attention])
 
   const url = request?.url ?? room?.url
   useEffect(() => {
@@ -84,10 +90,6 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
           roomRef.current = next; setRoom(next)
           sessionStorage.setItem('showtimer-broadcast', JSON.stringify(next))
         }
-        if ((data.type === 'attention-sent' || data.type === 'attention-error') && data.id === pendingAttention.current) {
-          clearTimeout(attentionTimeout.current); pendingAttention.current = ''
-          setAttentionStatus(data.type === 'attention-error' ? data.error : `${data.target === 'screen' ? 'Screen' : 'Q Mark'} reminder sent to ${data.viewers} viewer(s).`)
-        }
         if (data.type === 'published') setBroadcastStatus('Broadcasting')
         if (data.type === 'created' || data.type === 'joined') {
           retryDelay = 1000; joined.current = true; setBroadcastStatus('Broadcasting'); publish()
@@ -101,8 +103,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
       }
       ws.onerror = () => ws.close()
       ws.onclose = () => {
-        joined.current = false; setSupportsAttention(false)
-        clearTimeout(attentionTimeout.current); pendingAttention.current = ''
+        joined.current = false; setSupportsAttention(false); setAttention(null)
         if (!stopped && !terminal) { setBroadcastStatus('Connection lost. Reconnecting…'); reconnect = setTimeout(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, 15000) }
       }
     }
@@ -119,7 +120,6 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     return () => {
       stopped = true; clearTimeout(reconnect); clearInterval(heartbeat)
       document.removeEventListener('visibilitychange', visible)
-      clearTimeout(attentionTimeout.current); pendingAttention.current = ''
       broadcastSocket.current?.close(); joined.current = false
     }
   }, [url, request])
@@ -177,23 +177,13 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     const socket = broadcastSocket.current
     if (!supportsAttention || !joined.current || socket?.readyState !== WebSocket.OPEN) return
     if (target === 'cue' && !store.project.cueMarks.some(mark => mark.id === cueMarkId)) return
-    const now = Date.now()
-    if (now - lastAttentionAt.current < ATTENTION_COOLDOWN_MS) {
-      setAttentionStatus('Please wait before sending another reminder.'); return
-    }
     if (socket.bufferedAmount > 256 * 1024) {
-      setAttentionStatus('Network busy. Reminder was not sent; try again.'); return
+      setAttentionStatus('Network busy. Try again.'); return
     }
-    lastAttentionAt.current = now
-    const id = crypto.randomUUID()
-    pendingAttention.current = id
-    socket.send(JSON.stringify({ type: 'attention', id, target, cueMarkId, sentAtMs: now + offset.current }))
-    clearTimeout(attentionTimeout.current)
-    setAttentionStatus('Sending reminder…')
-    attentionTimeout.current = setTimeout(() => {
-      pendingAttention.current = ''
-      setAttentionStatus('No reminder acknowledgement. Check the connection and try again.')
-    }, 3000)
+    const marks = store.project.cueMarks
+    const mark = marks.find(mark => mark.id === cueMarkId)
+    setAttention(current => toggleAttention(current, target, cueMarkId, mark?.note ?? '', Date.now() + offset.current))
+    setAttentionStatus('Click the large timer or the same Mark number to finish the reminder.')
   }
 
   return <ConnectionsContext.Provider value={{ room, broadcastStatus, oscStatus,
@@ -207,11 +197,11 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     },
     stopBroadcast: () => {
       if (broadcastSocket.current?.readyState === WebSocket.OPEN && joined.current) broadcastSocket.current.send(JSON.stringify({ type: 'end' }))
-      roomRef.current = null; setRoom(null); setRequest(null); sessionStorage.removeItem('showtimer-broadcast'); setBroadcastStatus('Broadcast stopped'); setSupportsAttention(false); setAttentionStatus('Start a broadcast to send reminders.')
+      setAttention(null); roomRef.current = null; setRoom(null); setRequest(null); sessionStorage.removeItem('showtimer-broadcast'); setBroadcastStatus('Broadcast stopped'); setSupportsAttention(false); setAttentionStatus('Start a broadcast to send reminders.')
     },
     connectOsc: (raw, token) => {
       try { setOsc({ url: validateSocketUrl(raw, true), token }) } catch (error) { setOscStatus((error as Error).message) }
     },
     disconnectOsc: () => { setOsc(null); setOscStatus('Disconnected') },
-  }}>{children}</ConnectionsContext.Provider>
+  }}>{children}<AttentionBorder attention={attention} /></ConnectionsContext.Provider>
 }
