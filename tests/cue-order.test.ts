@@ -25,21 +25,21 @@ import { createShowProject } from '../src/models/ShowProject'
 import { exportProjectToCsv, importProjectFromCsv } from '../src/services/ExcelExporter'
 import { validateShowProject } from '../src/services/JsonProjectService'
 import { makeSnapshot } from '../src/services/Broadcast'
-test('untouched default notes follow their marks through moves and persistence', () => {
+test('blank notes remain blank through moves, insertion and persistence', () => {
   const a = { ...mark('a', 5), note: '' }
   const b = { ...mark('b', 10), note: '' }
   const moved = moveCueMark([a, b], 'b', 'up')
-  assert.deepEqual(moved.map(m => [m.id, m.note]), [['b', 'Q2'], ['a', 'Q1']])
+  assert.deepEqual(moved.map(m => [m.id, m.note]), [['b', ''], ['a', '']])
   assert.equal(a.note, '')
   const project = createShowProject('Default notes')
   project.segments = [{ id: '0', order: 0, name: 'Act', type: 'act', plannedSeconds: 60 }]
   project.cueMarks = moved
   for (const restored of [validateShowProject(JSON.parse(JSON.stringify(project))), importProjectFromCsv(exportProjectToCsv(project))]) {
-    assert.deepEqual(sortCueMarks(restored.cueMarks).map(m => m.note), ['Q2', 'Q1'])
+    assert.deepEqual(sortCueMarks(restored.cueMarks).map(m => m.note), ['', ''])
   }
-  assert.deepEqual(moveCueMark(moved, 'b', 'down').map(m => m.note), ['Q1', 'Q2'])
+  assert.deepEqual(moveCueMark(moved, 'b', 'down').map(m => m.note), ['', ''])
   const inserted = insertCueMark([a, b], { ...mark('new', 1), note: '' })
-  assert.deepEqual(inserted.map(m => [m.id, m.note]), [['new', 'Q1'], ['a', 'Q1'], ['b', 'Q2']])
+  assert.deepEqual(inserted.map(m => [m.id, m.note]), [['new', ''], ['a', ''], ['b', '']])
 })
 
 test('manual order survives JSON, CSV and viewer snapshots', () => {

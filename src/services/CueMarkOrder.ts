@@ -14,11 +14,11 @@ export function sortCueMarks(marks: CueMark[]): CueMark[] {
 }
 
 function numberRows(marks: CueMark[]): CueMark[] {
-  return marks.map((mark, displayOrder) => ({ ...mark, displayOrder, note: mark.note || `Q${displayOrder + 1}` }))
+  return marks.map((mark, displayOrder) => ({ ...mark, displayOrder }))
 }
 
 export function insertCueMark(marks: CueMark[], added: CueMark): CueMark[] {
-  const ordered = numberRows(sortCueMarks(marks))
+  const ordered = sortCueMarks(marks)
   // Insert before the first later cue without undoing existing manual moves.
   const next = ordered.findIndex(mark => compareCueTime(added, mark) < 0)
   ordered.splice(next < 0 ? ordered.length : next, 0, added)
@@ -26,8 +26,7 @@ export function insertCueMark(marks: CueMark[], added: CueMark): CueMark[] {
 }
 
 export function moveCueMark(marks: CueMark[], id: string, direction: string): CueMark[] {
-  // Freeze legacy placeholder notes before changing their row positions.
-  const ordered = numberRows(sortCueMarks(marks))
+  const ordered = sortCueMarks(marks)
   const index = ordered.findIndex(mark => mark.id === id)
   const target = direction === 'up' || direction === 'down' ? index + (direction === 'up' ? -1 : 1) : ordered.findIndex(mark => mark.id === direction)
   if (index < 0 || target < 0 || target >= ordered.length) return marks

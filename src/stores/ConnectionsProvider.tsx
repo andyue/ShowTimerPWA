@@ -183,7 +183,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
     const marks = store.project.cueMarks
     const mark = marks.find(mark => mark.id === cueMarkId)
     setAttention(current => toggleAttention(current, target, cueMarkId, mark?.note ?? '', Date.now() + offset.current))
-    setAttentionStatus('Click the large timer or the same Mark number to finish the reminder.')
+    setAttentionStatus('Click GO, the large timer or the same Mark number to finish the reminder.')
   }
 
   return <ConnectionsContext.Provider value={{ room, broadcastStatus, oscStatus,
@@ -203,5 +203,7 @@ export default function ConnectionsProvider({ children }: { children: ReactNode 
       try { setOsc({ url: validateSocketUrl(raw, true), token }) } catch (error) { setOscStatus((error as Error).message) }
     },
     disconnectOsc: () => { setOsc(null); setOscStatus('Disconnected') },
-  }}>{children}<AttentionBorder attention={attention} /></ConnectionsContext.Provider>
+  }}>{children}<AttentionBorder attention={attention} />
+    {attention?.phase === 'active' && <button type="button" className="attention-go" onClick={() => sendAttention('screen')}>GO</button>}
+  </ConnectionsContext.Provider>
 }

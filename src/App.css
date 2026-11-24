@@ -1346,6 +1346,9 @@ button.cue-reminder-trigger { min-width: 2rem; min-height: 2rem; }
 .attention-border { position: fixed; inset: 0; z-index: 10000; pointer-events: none; border: 12px solid #ff2020; }
 .attention-active { animation: attention-border-blink 250ms steps(1, end) infinite; }
 .attention-complete { border-color: #00ed68; }
+.attention-go { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10001; min-width: 160px; min-height: 100px; padding: 20px 36px; border: 2px solid white; border-radius: 16px; background: #008a3d; color: #fff; font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 800; line-height: 1; box-shadow: 0 8px 32px #0008; cursor: pointer; }
+.attention-go:hover { background: #006e31; }
+.attention-go:focus-visible { outline: 3px solid white; outline-offset: 5px; }
 @keyframes attention-border-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .viewer-cue-note { font-family: sans-serif; font-size: clamp(2rem, 6vw, 6rem); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 55vh; overflow: auto; line-height: 1.15; }
 .cue-drag-handle { touch-action: none; cursor: grab; font-size: 1.5rem; min-width: 36px; min-height: 40px; user-select: none; }

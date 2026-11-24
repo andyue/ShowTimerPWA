@@ -281,11 +281,11 @@ export default function QMarkPage() {
                           className="danger-button qmark-delete-button"
                           aria-label="Delete" title={`Delete Q${index + 1}`}
                           type="button"
-                          onClick={() =>
-                            deleteCueMark(
-                              cueMark.id,
-                            )
-                          }
+                          onClick={() => {
+                            if (window.confirm(`確定要刪除 Q${index + 1} 嗎？此操作無法復原。`)) {
+                              deleteCueMark(cueMark.id)
+                            }
+                          }}
                         >
                           ×
                         </button>
